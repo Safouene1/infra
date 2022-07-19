@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime/trace"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -18,6 +19,8 @@ import (
 
 func setupDB(t *testing.T, driver gorm.Dialector) *gorm.DB {
 	t.Helper()
+
+	region := trace.StartRegion(context.Background(), "setup"+driver.Name())
 	patch.ModelsSymmetricKey(t)
 
 	db, err := NewDB(driver, nil)
@@ -27,6 +30,7 @@ func setupDB(t *testing.T, driver gorm.Dialector) *gorm.DB {
 
 	logging.PatchLogger(t, zerolog.NewTestWriter(t))
 	t.Cleanup(InvalidateCache)
+	region.End()
 
 	return db
 }
@@ -46,18 +50,29 @@ func dbDrivers(t *testing.T) []gorm.Dialector {
 	pgConn, ok := os.LookupEnv("POSTGRESQL_CONNECTION")
 	switch {
 	case ok:
+		ctx := context.Background()
+		region := trace.StartRegion(ctx, "driver")
 		pgsql, err := NewPostgresDriver(pgConn)
 		assert.NilError(t, err, "postgresql driver")
+		region.End()
 
+		region = trace.StartRegion(ctx, "open")
 		db, err := gorm.Open(pgsql)
 		assert.NilError(t, err, "connect to postgresql")
+		region.End()
 		t.Cleanup(func() {
+			region := trace.StartRegion(ctx, "drop")
 			assert.NilError(t, db.Exec("DROP SCHEMA testing CASCADE").Error)
+			region.End()
 		})
+		region = trace.StartRegion(ctx, "create")
 		assert.NilError(t, db.Exec("CREATE SCHEMA testing").Error)
+		region.End()
 
+		region = trace.StartRegion(ctx, "driver")
 		pgsql, err = NewPostgresDriver(pgConn + " search_path=testing")
 		assert.NilError(t, err, "postgresql driver")
+		region.End()
 
 		drivers = append(drivers, pgsql)
 	case os.Getenv("CI") != "":

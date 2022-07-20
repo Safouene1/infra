@@ -44,9 +44,9 @@ func TestMetrics(t *testing.T) {
 	t.Run("infra users", func(t *testing.T) {
 		db := setupDB(t)
 
-		assert.NilError(t, data.CreateIdentity(db, &models.Identity{Name: "1"}))
-		assert.NilError(t, data.CreateIdentity(db, &models.Identity{Name: "2"}))
-		assert.NilError(t, data.CreateIdentity(db, &models.Identity{Name: "3"}))
+		assert.NilError(t, data.CreateIdentity(db, &models.User{Name: "1"}))
+		assert.NilError(t, data.CreateIdentity(db, &models.User{Name: "2"}))
+		assert.NilError(t, data.CreateIdentity(db, &models.User{Name: "3"}))
 
 		actual := run(db, `infra_users({.*})? \d+`)
 		golden.Assert(t, string(actual), t.Name())

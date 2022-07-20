@@ -40,8 +40,8 @@ func TestUsersCmd(t *testing.T) {
 	userIDs := []uid.ID{12, 23, 34, 45, 56}
 	userIdx := 0
 
-	setup := func(t *testing.T) *[]models.Identity {
-		modifiedUsers := []models.Identity{}
+	setup := func(t *testing.T) *[]models.User {
+		modifiedUsers := []models.User{}
 
 		handler := func(resp http.ResponseWriter, req *http.Request) {
 			if strings.Contains(req.URL.Path, "/api/providers") {
@@ -68,7 +68,7 @@ func TestUsersCmd(t *testing.T) {
 					err := json.NewDecoder(req.Body).Decode(&createUserReq)
 					assert.NilError(t, err)
 
-					newUser := models.Identity{
+					newUser := models.User{
 						Name: createUserReq.Name,
 					}
 					newUser.ID = userIDs[userIdx]

@@ -21,7 +21,7 @@ func TestAPI_Login(t *testing.T) {
 	routes := srv.GenerateRoutes(prometheus.NewRegistry())
 
 	// setup user to login as
-	user := &models.Identity{Name: "steve"}
+	user := &models.User{Name: "steve"}
 	err := data.CreateIdentity(srv.db, user)
 	assert.NilError(t, err)
 

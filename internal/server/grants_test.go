@@ -646,7 +646,7 @@ func TestAPI_DeleteGrant(t *testing.T) {
 	srv := setupServer(t, withAdminUser)
 	routes := srv.GenerateRoutes(prometheus.NewRegistry())
 
-	user := &models.Identity{Name: "non-admin"}
+	user := &models.User{Name: "non-admin"}
 
 	err := data.CreateIdentity(srv.db, user)
 	assert.NilError(t, err)

@@ -40,7 +40,7 @@ func setupDB(t *testing.T) *gorm.DB {
 }
 
 func issueToken(t *testing.T, db *gorm.DB, identityName string, sessionDuration time.Duration) string {
-	user := &models.Identity{Name: identityName}
+	user := &models.User{Name: identityName}
 
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
@@ -269,7 +269,7 @@ func TestDestinationMiddleware(t *testing.T) {
 		DestinationMiddleware(),
 	)
 
-	connector := models.Identity{Name: "connector"}
+	connector := models.User{Name: "connector"}
 	err := data.CreateIdentity(db, &connector)
 	assert.NilError(t, err)
 

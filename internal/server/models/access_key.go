@@ -19,7 +19,7 @@ type AccessKey struct {
 	Model
 	Name              string                `gorm:"uniqueIndex:idx_access_keys_name,where:deleted_at is NULL" validate:"excludes= "`
 	IssuedFor         uid.ID                `validate:"required"` // the ID of the identity that this access key was created for
-	IssuedForIdentity *Identity             `gorm:"foreignKey:IssuedFor"`
+	IssuedForIdentity *User                 `gorm:"foreignKey:IssuedFor"`
 	ProviderID        uid.ID                `validate:"required"`
 	Scopes            CommaSeparatedStrings // if set, scopes limit what the key can be used for
 

@@ -173,7 +173,7 @@ func TestAPI_ListAccessKeys(t *testing.T) {
 		server: s,
 	}
 
-	user := &models.Identity{Model: models.Model{ID: uid.New()}, Name: "foo@example.com"}
+	user := &models.User{Model: models.Model{ID: uid.New()}, Name: "foo@example.com"}
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
 	provider := data.InfraProvider(db)

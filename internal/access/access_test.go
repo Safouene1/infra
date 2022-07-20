@@ -40,7 +40,7 @@ func setupAccessTestContext(t *testing.T) (*gin.Context, *gorm.DB, *models.Provi
 	})
 	assert.NilError(t, err)
 
-	admin := &models.Identity{Name: "admin@example.com"}
+	admin := &models.User{Name: "admin@example.com"}
 	err = data.CreateIdentity(db, admin)
 	assert.NilError(t, err)
 
@@ -56,7 +56,7 @@ func setupAccessTestContext(t *testing.T) (*gin.Context, *gorm.DB, *models.Provi
 
 	provider := data.InfraProvider(db)
 
-	identity := &models.Identity{Name: models.InternalInfraConnectorIdentityName}
+	identity := &models.User{Name: models.InternalInfraConnectorIdentityName}
 	err = data.CreateIdentity(db, identity)
 	assert.NilError(t, err)
 
@@ -64,7 +64,7 @@ func setupAccessTestContext(t *testing.T) (*gin.Context, *gorm.DB, *models.Provi
 }
 
 var (
-	tom       = &models.Identity{Name: "tom@infrahq.com"}
+	tom       = &models.User{Name: "tom@infrahq.com"}
 	tomsGroup = &models.Group{Name: "tom's group"}
 )
 
@@ -94,7 +94,7 @@ func TestBasicGrant(t *testing.T) {
 func TestUsersGroupGrant(t *testing.T) {
 	db := setupDB(t)
 
-	tom = &models.Identity{Name: "tom@infrahq.com"}
+	tom = &models.User{Name: "tom@infrahq.com"}
 	tomsGroup = &models.Group{Name: "tom's group"}
 	provider := data.InfraProvider(db)
 
@@ -129,7 +129,7 @@ func TestInfraRequireInfraRole(t *testing.T) {
 	db := setupDB(t)
 
 	setup := func(t *testing.T, infraRole string) *gin.Context {
-		testIdentity := &models.Identity{Name: fmt.Sprintf("infra-%s-%s", infraRole, time.Now())}
+		testIdentity := &models.User{Name: fmt.Sprintf("infra-%s-%s", infraRole, time.Now())}
 
 		err := data.CreateIdentity(db, testIdentity)
 		assert.NilError(t, err)
@@ -177,7 +177,7 @@ func TestInfraRequireInfraRole(t *testing.T) {
 	})
 }
 
-func grant(t *testing.T, db *gorm.DB, currentUser *models.Identity, subject uid.PolymorphicID, privilege, resource string) {
+func grant(t *testing.T, db *gorm.DB, currentUser *models.User, subject uid.PolymorphicID, privilege, resource string) {
 	err := data.CreateGrant(db, &models.Grant{
 		Subject:   subject,
 		Privilege: privilege,

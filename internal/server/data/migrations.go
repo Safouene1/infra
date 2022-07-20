@@ -196,14 +196,14 @@ func migrate(db *gorm.DB) error {
 			ID: "202203301645",
 			Migrate: func(tx *gorm.DB) error {
 				logging.Infof("running migration 202203301645")
-				if tx.Migrator().HasColumn(&models.Identity{}, "email") {
-					return tx.Migrator().RenameColumn(&models.Identity{}, "email", "name")
+				if tx.Migrator().HasColumn(&models.User{}, "email") {
+					return tx.Migrator().RenameColumn(&models.User{}, "email", "name")
 				}
 
 				return nil
 			},
 			Rollback: func(tx *gorm.DB) error {
-				return tx.Migrator().RenameColumn(&models.Identity{}, "name", "email")
+				return tx.Migrator().RenameColumn(&models.User{}, "name", "email")
 			},
 		},
 		// #1284: migrate machines to the identities table
@@ -227,7 +227,7 @@ func migrate(db *gorm.DB) error {
 					}
 
 					for _, machine := range machines {
-						identity := &models.Identity{
+						identity := &models.User{
 							Model:      machine.Model,
 							Name:       machine.Name,
 							LastSeenAt: machine.LastSeenAt,
@@ -454,8 +454,8 @@ func migrate(db *gorm.DB) error {
 		{
 			ID: "202204291613",
 			Migrate: func(tx *gorm.DB) error {
-				if tx.Migrator().HasColumn(&models.Identity{}, "kind") {
-					if err := tx.Migrator().DropColumn(&models.Identity{}, "kind"); err != nil {
+				if tx.Migrator().HasColumn(&models.User{}, "kind") {
+					if err := tx.Migrator().DropColumn(&models.User{}, "kind"); err != nil {
 						return err
 					}
 				}
@@ -503,7 +503,7 @@ func preMigrate(db *gorm.DB) error {
 
 func initializeSchema(db *gorm.DB) error {
 	tables := []interface{}{
-		&models.Identity{},
+		&models.User{},
 		&models.Group{},
 		&models.Grant{},
 		&models.Provider{},

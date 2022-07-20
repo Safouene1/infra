@@ -19,7 +19,7 @@ import (
 	"github.com/infrahq/infra/uid"
 )
 
-func createIdentities(t *testing.T, db *gorm.DB, identities ...*models.Identity) {
+func createIdentities(t *testing.T, db *gorm.DB, identities ...*models.User) {
 	t.Helper()
 	for i := range identities {
 		err := data.CreateIdentity(db, identities[i])
@@ -48,11 +48,11 @@ func TestAPI_ListGroups(t *testing.T) {
 	createGroups(t, srv.db, &humans, &second)
 
 	var (
-		idInGroup = models.Identity{
+		idInGroup = models.User{
 			Name:   "inagroup@example.com",
 			Groups: []models.Group{humans, second},
 		}
-		idOther = models.Identity{
+		idOther = models.User{
 			Name:   "other@example.com",
 			Groups: []models.Group{others},
 		}
@@ -196,7 +196,7 @@ func TestAPI_CreateGroup(t *testing.T) {
 		body     api.CreateGroupRequest
 	}
 
-	meUser := models.Identity{Name: "me@example.com"}
+	meUser := models.User{Name: "me@example.com"}
 	createIdentities(t, srv.db, &meUser)
 
 	token := &models.AccessKey{
@@ -276,7 +276,7 @@ func TestAPI_DeleteGroup(t *testing.T) {
 	createGroups(t, srv.db, &humans)
 
 	var (
-		inGroup = models.Identity{
+		inGroup = models.User{
 			Name:   "inagroup@example.com",
 			Groups: []models.Group{humans},
 		}
@@ -353,8 +353,8 @@ func TestAPI_UpdateUsersInGroup(t *testing.T) {
 	createGroups(t, srv.db, &humans)
 
 	var (
-		first  = models.Identity{Name: "first@example.com"}
-		second = models.Identity{Name: "second@example.com"}
+		first  = models.User{Name: "first@example.com"}
+		second = models.User{Name: "second@example.com"}
 	)
 
 	createIdentities(t, srv.db, &first, &second)
@@ -411,7 +411,7 @@ func TestAPI_UpdateUsersInGroup(t *testing.T) {
 				assert.Equal(t, resp.Code, http.StatusOK, resp.Body.String())
 				idents, err := data.ListIdentities(srv.db, &models.Pagination{}, []data.SelectorFunc{data.ByOptionalIdentityGroupID(humans.ID)}...)
 				assert.NilError(t, err)
-				assert.DeepEqual(t, idents, []models.Identity{first, second}, cmpModelsIdentityShallow)
+				assert.DeepEqual(t, idents, []models.User{first, second}, cmpModelsIdentityShallow)
 			},
 			body: api.UpdateUsersInGroupRequest{
 				UserIDsToAdd: []uid.ID{first.ID, second.ID},
@@ -466,6 +466,6 @@ func TestAPI_UpdateUsersInGroup(t *testing.T) {
 	}
 }
 
-var cmpModelsIdentityShallow = cmp.Comparer(func(x, y models.Identity) bool {
+var cmpModelsIdentityShallow = cmp.Comparer(func(x, y models.User) bool {
 	return x.Name == y.Name
 })

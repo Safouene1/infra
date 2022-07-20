@@ -780,7 +780,7 @@ func (s Server) loadUsers(db *gorm.DB, users []User) error {
 	return nil
 }
 
-func (s Server) loadUser(db *gorm.DB, input User) (*models.Identity, error) {
+func (s Server) loadUser(db *gorm.DB, input User) (*models.User, error) {
 	name := input.Name
 	if name == "" {
 		if input.Email != "" {
@@ -802,7 +802,7 @@ func (s Server) loadUser(db *gorm.DB, input User) (*models.Identity, error) {
 			}
 		}
 
-		identity = &models.Identity{
+		identity = &models.User{
 			Name:      name,
 			CreatedBy: models.CreatedBySystem,
 		}
@@ -823,7 +823,7 @@ func (s Server) loadUser(db *gorm.DB, input User) (*models.Identity, error) {
 	return identity, nil
 }
 
-func (s Server) loadCredential(db *gorm.DB, identity *models.Identity, password string) error {
+func (s Server) loadCredential(db *gorm.DB, identity *models.User, password string) error {
 	if password == "" {
 		return nil
 	}
@@ -869,7 +869,7 @@ func (s Server) loadCredential(db *gorm.DB, identity *models.Identity, password 
 	return nil
 }
 
-func (s Server) loadAccessKey(db *gorm.DB, identity *models.Identity, key string) error {
+func (s Server) loadAccessKey(db *gorm.DB, identity *models.User, key string) error {
 	if key == "" {
 		return nil
 	}

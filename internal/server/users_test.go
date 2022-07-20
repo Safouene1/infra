@@ -186,7 +186,7 @@ func TestAPI_ListUsers(t *testing.T) {
 	//       when the new endpoint to add a user to a group exists
 	humans := models.Group{Name: "humans"}
 	createGroups(t, srv.db, &humans)
-	anotherID := models.Identity{
+	anotherID := models.User{
 		Name:   "AnotherUser@example.com",
 		Groups: []models.Group{humans},
 	}
@@ -409,7 +409,7 @@ func TestAPI_CreateUser(t *testing.T) {
 	srv := setupServer(t, withAdminUser)
 	routes := srv.GenerateRoutes(prometheus.NewRegistry())
 
-	existing := &models.Identity{Name: "existing@example.com"}
+	existing := &models.User{Name: "existing@example.com"}
 	err := data.CreateIdentity(srv.db, existing)
 	assert.NilError(t, err)
 
@@ -546,7 +546,7 @@ func TestAPI_CreateUserAndUpdatePassword(t *testing.T) {
 		err := data.CreateProvider(db, idp)
 		assert.NilError(t, err)
 
-		user := &models.Identity{Name: "user@example.com"}
+		user := &models.User{Name: "user@example.com"}
 
 		err = data.CreateIdentity(db, user)
 		assert.NilError(t, err)
@@ -629,7 +629,7 @@ func TestAPI_CreateUserAndUpdatePassword(t *testing.T) {
 			})
 		})
 		t.Run("as a user", func(t *testing.T) {
-			user := &models.Identity{Name: "user2@example.com"}
+			user := &models.User{Name: "user2@example.com"}
 
 			err := data.CreateIdentity(db, user)
 			assert.NilError(t, err)
@@ -659,7 +659,7 @@ func TestAPI_DeleteUser(t *testing.T) {
 	srv := setupServer(t, withAdminUser)
 	routes := srv.GenerateRoutes(prometheus.NewRegistry())
 
-	testUser := &models.Identity{Name: "test"}
+	testUser := &models.User{Name: "test"}
 	err := data.CreateIdentity(srv.db, testUser)
 	assert.NilError(t, err)
 
@@ -729,7 +729,7 @@ func TestAPI_UpdateUser(t *testing.T) {
 	srv := setupServer(t, withAdminUser)
 	routes := srv.GenerateRoutes(prometheus.NewRegistry())
 
-	user := &models.Identity{Name: "salsa@example.com"}
+	user := &models.User{Name: "salsa@example.com"}
 	err := data.CreateIdentity(srv.db, user)
 	assert.NilError(t, err)
 

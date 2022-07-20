@@ -49,8 +49,8 @@ func withAdminUser(_ *testing.T, opts *Options) {
 	})
 }
 
-func createAdmin(t *testing.T, db *gorm.DB) *models.Identity {
-	user := &models.Identity{
+func createAdmin(t *testing.T, db *gorm.DB) *models.User {
+	user := &models.User{
 		Name: "admin+" + generate.MathRandom(10, generate.CharsetAlphaNumeric),
 	}
 	err := data.CreateIdentity(db, user)
@@ -66,7 +66,7 @@ func createAdmin(t *testing.T, db *gorm.DB) *models.Identity {
 	return user
 }
 
-func loginAs(db *gorm.DB, user *models.Identity) *gin.Context {
+func loginAs(db *gorm.DB, user *models.User) *gin.Context {
 	ctx, _ := gin.CreateTestContext(nil)
 	ctx.Set("db", db)
 	ctx.Set("identity", user)

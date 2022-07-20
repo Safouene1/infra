@@ -18,7 +18,7 @@ var signatureAlgorithmFromKeyAlgorithm = map[string]string{
 	"ED25519": "EdDSA", // elliptic curve 25519
 }
 
-func createJWT(db *gorm.DB, identity *models.Identity, groups []string, expires time.Time) (string, error) {
+func createJWT(db *gorm.DB, identity *models.User, groups []string, expires time.Time) (string, error) {
 	settings, err := GetSettings(db)
 	if err != nil {
 		return "", err

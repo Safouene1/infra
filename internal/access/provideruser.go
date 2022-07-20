@@ -7,7 +7,7 @@ import (
 	"github.com/infrahq/infra/internal/server/models"
 )
 
-func CreateProviderUser(c *gin.Context, provider *models.Provider, ident *models.Identity) (*models.ProviderUser, error) {
+func CreateProviderUser(c *gin.Context, provider *models.Provider, ident *models.User) (*models.ProviderUser, error) {
 	// does not need authorization check, this function should only be called internally
 	db := getDB(c)
 

@@ -16,20 +16,20 @@ import (
 
 func TestIdentity(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
-		bond := models.Identity{Name: "jbond@infrahq.com"}
+		bond := models.User{Name: "jbond@infrahq.com"}
 
 		err := db.Create(&bond).Error
 		assert.NilError(t, err)
 
-		var identity models.Identity
-		err = db.First(&identity, &models.Identity{Name: bond.Name}).Error
+		var identity models.User
+		err = db.First(&identity, &models.User{Name: bond.Name}).Error
 		assert.NilError(t, err)
 		assert.Assert(t, 0 != identity.ID)
 		assert.Equal(t, bond.Name, identity.Name)
 	})
 }
 
-func createIdentities(t *testing.T, db *gorm.DB, identities ...*models.Identity) {
+func createIdentities(t *testing.T, db *gorm.DB, identities ...*models.User) {
 	t.Helper()
 	for i := range identities {
 		err := CreateIdentity(db, identities[i])
@@ -40,9 +40,9 @@ func createIdentities(t *testing.T, db *gorm.DB, identities ...*models.Identity)
 func TestCreateDuplicateUser(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
 		var (
-			bond   = models.Identity{Name: "jbond@infrahq.com"}
-			bourne = models.Identity{Name: "jbourne@infrahq.com"}
-			bauer  = models.Identity{Name: "jbauer@infrahq.com"}
+			bond   = models.User{Name: "jbond@infrahq.com"}
+			bourne = models.User{Name: "jbourne@infrahq.com"}
+			bauer  = models.User{Name: "jbauer@infrahq.com"}
 		)
 
 		createIdentities(t, db, &bond, &bourne, &bauer)
@@ -57,9 +57,9 @@ func TestCreateDuplicateUser(t *testing.T) {
 func TestGetIdentity(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
 		var (
-			bond   = models.Identity{Name: "jbond@infrahq.com"}
-			bourne = models.Identity{Name: "jbourne@infrahq.com"}
-			bauer  = models.Identity{Name: "jbauer@infrahq.com"}
+			bond   = models.User{Name: "jbond@infrahq.com"}
+			bourne = models.User{Name: "jbourne@infrahq.com"}
+			bauer  = models.User{Name: "jbauer@infrahq.com"}
 		)
 
 		createIdentities(t, db, &bond, &bourne, &bauer)
@@ -80,15 +80,15 @@ func TestListIdentities(t *testing.T) {
 		createGroups(t, db, &everyone, &engineers, &product)
 
 		var (
-			bond = models.Identity{
+			bond = models.User{
 				Name:   "jbond@infrahq.com",
 				Groups: []models.Group{everyone, engineers},
 			}
-			bourne = models.Identity{
+			bourne = models.User{
 				Name:   "jbourne@infrahq.com",
 				Groups: []models.Group{everyone, product},
 			}
-			bauer = models.Identity{
+			bauer = models.User{
 				Name:   "jbauer@infrahq.com",
 				Groups: []models.Group{everyone},
 			}
@@ -98,50 +98,50 @@ func TestListIdentities(t *testing.T) {
 		t.Run("list all", func(t *testing.T) {
 			identities, err := ListIdentities(db, &models.Pagination{})
 			assert.NilError(t, err)
-			expected := []models.Identity{bauer, bond, bourne}
+			expected := []models.User{bauer, bond, bourne}
 			assert.DeepEqual(t, identities, expected, cmpModelsIdentityShallow)
 		})
 
 		t.Run("filter by name", func(t *testing.T) {
 			identities, err := ListIdentities(db, &models.Pagination{}, ByName(bourne.Name))
 			assert.NilError(t, err)
-			expected := []models.Identity{bourne}
+			expected := []models.User{bourne}
 			assert.DeepEqual(t, identities, expected, cmpModelsIdentityShallow)
 		})
 
 		t.Run("filter identities by group", func(t *testing.T) {
 			actual, err := ListIdentities(db, &models.Pagination{}, ByOptionalIdentityGroupID(everyone.ID))
 			assert.NilError(t, err)
-			expected := []models.Identity{bauer, bond, bourne}
+			expected := []models.User{bauer, bond, bourne}
 			assert.DeepEqual(t, actual, expected, cmpModelsIdentityShallow)
 		})
 
 		t.Run("filter identities by different group", func(t *testing.T) {
 			actual, err := ListIdentities(db, &models.Pagination{}, ByOptionalIdentityGroupID(engineers.ID))
 			assert.NilError(t, err)
-			expected := []models.Identity{bond}
+			expected := []models.User{bond}
 			assert.DeepEqual(t, actual, expected, cmpModelsIdentityShallow)
 		})
 
 		t.Run("filter identities by group and name", func(t *testing.T) {
 			actual, err := ListIdentities(db, &models.Pagination{}, ByOptionalIdentityGroupID(everyone.ID), ByName(bauer.Name))
 			assert.NilError(t, err)
-			expected := []models.Identity{bauer}
+			expected := []models.User{bauer}
 			assert.DeepEqual(t, actual, expected, cmpModelsIdentityShallow)
 		})
 	})
 }
 
-var cmpModelsIdentityShallow = cmp.Comparer(func(x, y models.Identity) bool {
+var cmpModelsIdentityShallow = cmp.Comparer(func(x, y models.User) bool {
 	return x.Name == y.Name
 })
 
 func TestDeleteIdentity(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
 		var (
-			bond   = models.Identity{Name: "jbond@infrahq.com"}
-			bourne = models.Identity{Name: "jbourne@infrahq.com"}
-			bauer  = models.Identity{Name: "jbauer@infrahq.com"}
+			bond   = models.User{Name: "jbond@infrahq.com"}
+			bourne = models.User{Name: "jbourne@infrahq.com"}
+			bauer  = models.User{Name: "jbauer@infrahq.com"}
 		)
 
 		createIdentities(t, db, &bond, &bourne, &bauer)
@@ -168,9 +168,9 @@ func TestDeleteIdentity(t *testing.T) {
 func TestReCreateIdentitySameName(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
 		var (
-			bond   = models.Identity{Name: "jbond@infrahq.com"}
-			bourne = models.Identity{Name: "jbourne@infrahq.com"}
-			bauer  = models.Identity{Name: "jbauer@infrahq.com"}
+			bond   = models.User{Name: "jbond@infrahq.com"}
+			bourne = models.User{Name: "jbourne@infrahq.com"}
+			bauer  = models.User{Name: "jbauer@infrahq.com"}
 		)
 
 		createIdentities(t, db, &bond, &bourne, &bauer)
@@ -178,7 +178,7 @@ func TestReCreateIdentitySameName(t *testing.T) {
 		err := DeleteIdentities(db, ByName(bond.Name))
 		assert.NilError(t, err)
 
-		err = CreateIdentity(db, &models.Identity{Name: bond.Name})
+		err = CreateIdentity(db, &models.User{Name: bond.Name})
 		assert.NilError(t, err)
 	})
 }
@@ -211,7 +211,7 @@ func TestAssignIdentityToGroups(t *testing.T) {
 		for i, test := range tests {
 			t.Run(test.Name, func(t *testing.T) {
 				// setup identity
-				identity := &models.Identity{Name: fmt.Sprintf("foo+%d@example.com", i)}
+				identity := &models.User{Name: fmt.Sprintf("foo+%d@example.com", i)}
 				err := CreateIdentity(db, identity)
 				assert.NilError(t, err)
 

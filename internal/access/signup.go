@@ -20,7 +20,7 @@ func SignupEnabled(c *gin.Context) (bool, error) {
 	db := getDB(c)
 
 	// use Unscoped because deleting identities, providers or grants should not re-enable signup
-	identities, err := data.Count[models.Identity](db.Unscoped(), data.NotName(models.InternalInfraConnectorIdentityName))
+	identities, err := data.Count[models.User](db.Unscoped(), data.NotName(models.InternalInfraConnectorIdentityName))
 	if err != nil {
 		return false, err
 	}
@@ -45,11 +45,11 @@ func SignupEnabled(c *gin.Context) (bool, error) {
 
 // Signup creates a user identity using the supplied name and password and
 // grants the identity "admin" access to Infra.
-func Signup(c *gin.Context, name, password string) (*models.Identity, error) {
+func Signup(c *gin.Context, name, password string) (*models.User, error) {
 	// no authorization is setup yet
 	db := getDB(c)
 
-	identity := &models.Identity{Name: name}
+	identity := &models.User{Name: name}
 
 	if err := data.CreateIdentity(db, identity); err != nil {
 		return nil, err

@@ -60,14 +60,14 @@ func TestSyncProviderUser(t *testing.T) {
 
 		tests := []struct {
 			name              string
-			setupProviderUser func(t *testing.T) *models.Identity
+			setupProviderUser func(t *testing.T) *models.User
 			oidcClient        providers.OIDCClient
-			verifyFunc        func(t *testing.T, err error, user *models.Identity)
+			verifyFunc        func(t *testing.T, err error, user *models.User)
 		}{
 			{
 				name: "invalid/expired access token is updated",
-				setupProviderUser: func(t *testing.T) *models.Identity {
-					user := &models.Identity{
+				setupProviderUser: func(t *testing.T) *models.User {
+					user := &models.User{
 						Name: "hello@example.com",
 					}
 
@@ -95,7 +95,7 @@ func TestSyncProviderUser(t *testing.T) {
 					UserEmailResp:  "hello@example.com",
 					UserGroupsResp: []string{"Everyone", "Developers"},
 				},
-				verifyFunc: func(t *testing.T, err error, user *models.Identity) {
+				verifyFunc: func(t *testing.T, err error, user *models.User) {
 					assert.NilError(t, err)
 
 					pu, err := GetProviderUser(db, provider.ID, user.ID)
@@ -131,8 +131,8 @@ func TestSyncProviderUser(t *testing.T) {
 			},
 			{
 				name: "groups are updated to match user info",
-				setupProviderUser: func(t *testing.T) *models.Identity {
-					user := &models.Identity{
+				setupProviderUser: func(t *testing.T) *models.User {
+					user := &models.User{
 						Name: "sync@example.com",
 					}
 
@@ -160,7 +160,7 @@ func TestSyncProviderUser(t *testing.T) {
 					UserEmailResp:  "sync@example.com",
 					UserGroupsResp: []string{"Everyone", "Developers"},
 				},
-				verifyFunc: func(t *testing.T, err error, user *models.Identity) {
+				verifyFunc: func(t *testing.T, err error, user *models.User) {
 					assert.NilError(t, err)
 
 					pu, err := GetProviderUser(db, provider.ID, user.ID)

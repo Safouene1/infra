@@ -528,7 +528,7 @@ func TestLoadConfigWithUserGrants_OptionalRole(t *testing.T) {
 	err := s.loadConfig(config)
 	assert.NilError(t, err)
 
-	var user models.Identity
+	var user models.User
 	err = s.db.Where("name = ?", "test@example.com").First(&user).Error
 	assert.NilError(t, err)
 
@@ -559,7 +559,7 @@ func TestLoadConfigWithUserGrants(t *testing.T) {
 	err = s.db.Where("name = ?", models.InternalInfraProviderName).First(&provider).Error
 	assert.NilError(t, err)
 
-	var user models.Identity
+	var user models.User
 	err = s.db.Where("name = ?", "test@example.com").First(&user).Error
 	assert.NilError(t, err)
 
@@ -850,7 +850,7 @@ func TestLoadConfigUpdate(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, 2, len(identities))
 
-	var user models.Identity
+	var user models.User
 	err = s.db.Where("name = ?", "test@example.com").First(&user).Error
 	assert.NilError(t, err)
 
@@ -870,7 +870,7 @@ func TestLoadAccessKey(t *testing.T) {
 	testAccessKey := "aaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbb"
 
 	// create a user and assign them an access key
-	bob := &models.Identity{Name: "bob"}
+	bob := &models.User{Name: "bob"}
 	err := data.CreateIdentity(s.db, bob)
 	assert.NilError(t, err)
 
@@ -883,7 +883,7 @@ func TestLoadAccessKey(t *testing.T) {
 	})
 
 	t.Run("duplicate access key ID is rejected", func(t *testing.T) {
-		alice := &models.Identity{Name: "alice"}
+		alice := &models.User{Name: "alice"}
 		err = data.CreateIdentity(s.db, alice)
 		assert.NilError(t, err)
 
@@ -893,8 +893,8 @@ func TestLoadAccessKey(t *testing.T) {
 }
 
 // getTestUserDetails gets the attributes of a user created from a config file
-func getTestUserDetails(db *gorm.DB, name string) (*models.Identity, *models.Credential, *models.AccessKey, error) {
-	var user models.Identity
+func getTestUserDetails(db *gorm.DB, name string) (*models.User, *models.Credential, *models.AccessKey, error) {
+	var user models.User
 	var credential models.Credential
 	var accessKey models.AccessKey
 

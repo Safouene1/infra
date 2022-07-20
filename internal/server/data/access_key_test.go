@@ -15,7 +15,7 @@ import (
 
 func TestCreateAccessKey(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
-		jerry := &models.Identity{Name: "jseinfeld@infrahq.com"}
+		jerry := &models.User{Name: "jseinfeld@infrahq.com"}
 
 		err := CreateIdentity(db, jerry)
 		assert.NilError(t, err)
@@ -85,7 +85,7 @@ func TestCreateAccessKey(t *testing.T) {
 }
 
 func createAccessKeyWithExtensionDeadline(t *testing.T, db *gorm.DB, ttl, exensionDeadline time.Duration) (string, *models.AccessKey) {
-	identity := &models.Identity{Name: "Wall-E"}
+	identity := &models.User{Name: "Wall-E"}
 	err := CreateIdentity(db, identity)
 	assert.NilError(t, err)
 
@@ -155,7 +155,7 @@ func TestCheckAccessKeyPastExtensionDeadline(t *testing.T) {
 
 func TestListAccessKeys(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
-		user := &models.Identity{Name: "tmp@infrahq.com"}
+		user := &models.User{Name: "tmp@infrahq.com"}
 		err := CreateIdentity(db, user)
 		assert.NilError(t, err)
 
@@ -204,7 +204,7 @@ func TestListAccessKeys(t *testing.T) {
 }
 
 func createTestAccessKey(t *testing.T, db *gorm.DB, sessionDuration time.Duration) (string, *models.AccessKey) {
-	user := &models.Identity{Name: "tmp@infrahq.com"}
+	user := &models.User{Name: "tmp@infrahq.com"}
 	err := CreateIdentity(db, user)
 	assert.NilError(t, err)
 

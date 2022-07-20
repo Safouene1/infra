@@ -15,7 +15,7 @@ import (
 	"github.com/infrahq/infra/uid"
 )
 
-func CreateProviderUser(db *gorm.DB, provider *models.Provider, ident *models.Identity) (*models.ProviderUser, error) {
+func CreateProviderUser(db *gorm.DB, provider *models.Provider, ident *models.User) (*models.ProviderUser, error) {
 	pu, err := get[models.ProviderUser](db, ByIdentityID(ident.ID), ByProviderID(provider.ID))
 	if err != nil && !errors.Is(err, internal.ErrNotFound) {
 		return nil, err
@@ -54,7 +54,7 @@ func GetProviderUser(db *gorm.DB, providerID, userID uid.ID) (*models.ProviderUs
 	return get[models.ProviderUser](db, ByProviderID(providerID), ByIdentityID(userID))
 }
 
-func SyncProviderUser(ctx context.Context, db *gorm.DB, user *models.Identity, provider *models.Provider, oidcClient providers.OIDCClient) error {
+func SyncProviderUser(ctx context.Context, db *gorm.DB, user *models.User, provider *models.Provider, oidcClient providers.OIDCClient) error {
 	providerUser, err := GetProviderUser(db, provider.ID, user.ID)
 	if err != nil {
 		return err

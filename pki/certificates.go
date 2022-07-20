@@ -81,7 +81,7 @@ func MakeUserCert(commonName string, lifetime time.Duration) (*KeyPair, error) {
 	return keyPair, nil
 }
 
-func SignUserCert(cp CertificateProvider, cert *x509.Certificate, user *models.Identity) (*x509.Certificate, []byte, error) {
+func SignUserCert(cp CertificateProvider, cert *x509.Certificate, user *models.User) (*x509.Certificate, []byte, error) {
 	if len(cert.Raw) == 0 {
 		panic("cert.Raw is missing")
 	}

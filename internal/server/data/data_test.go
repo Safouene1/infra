@@ -156,7 +156,7 @@ func TestPaginationSelector(t *testing.T) {
 	runDBTests(t, func(t *testing.T, db *gorm.DB) {
 		for r := 'a'; r < 'a'+26; r++ {
 			letters = append(letters, string(r))
-			g := &models.Identity{Name: string(r)}
+			g := &models.User{Name: string(r)}
 			err := db.Create(g).Error
 			assert.NilError(t, err)
 		}
@@ -203,5 +203,5 @@ func TestDefaultSortFromType(t *testing.T) {
 	assert.Equal(t, getDefaultSortFromType(new(models.Grant)), "id ASC")
 	assert.Equal(t, getDefaultSortFromType(new(models.Group)), "name ASC")
 	assert.Equal(t, getDefaultSortFromType(new(models.Provider)), "name ASC")
-	assert.Equal(t, getDefaultSortFromType(new(models.Identity)), "name ASC")
+	assert.Equal(t, getDefaultSortFromType(new(models.User)), "name ASC")
 }

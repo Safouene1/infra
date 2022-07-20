@@ -19,7 +19,7 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 	cases := map[string]map[string]interface{}{
 		"InvalidAccessKeyCannotBeExchanged": {
 			"setup": func(t *testing.T, db *gorm.DB) LoginMethod {
-				user := &models.Identity{Name: "goku@example.com"}
+				user := &models.User{Name: "goku@example.com"}
 				err := data.CreateIdentity(db, user)
 				assert.NilError(t, err)
 
@@ -27,13 +27,13 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 
 				return NewKeyExchangeAuthentication(invalidKey, time.Now().Add(5*time.Minute))
 			},
-			"verify": func(t *testing.T, identity *models.Identity, provider *models.Provider, err error) {
+			"verify": func(t *testing.T, identity *models.User, provider *models.Provider, err error) {
 				assert.ErrorContains(t, err, "could not get access key from database")
 			},
 		},
 		"ExpiredAccessKeyCannotBeExchanged": {
 			"setup": func(t *testing.T, db *gorm.DB) LoginMethod {
-				user := &models.Identity{Name: "bulma@example.com"}
+				user := &models.User{Name: "bulma@example.com"}
 				err := data.CreateIdentity(db, user)
 				assert.NilError(t, err)
 
@@ -49,13 +49,13 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 
 				return NewKeyExchangeAuthentication(bearer, time.Now().Add(5*time.Minute))
 			},
-			"verify": func(t *testing.T, identity *models.Identity, provider *models.Provider, err error) {
+			"verify": func(t *testing.T, identity *models.User, provider *models.Provider, err error) {
 				assert.ErrorContains(t, err, data.ErrAccessKeyExpired.Error())
 			},
 		},
 		"AccessKeyCannotBeExchangedForLongerLived": {
 			"setup": func(t *testing.T, db *gorm.DB) LoginMethod {
-				user := &models.Identity{Name: "krillin@example.com"}
+				user := &models.User{Name: "krillin@example.com"}
 				err := data.CreateIdentity(db, user)
 				assert.NilError(t, err)
 
@@ -71,7 +71,7 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 
 				return NewKeyExchangeAuthentication(bearer, time.Now().Add(5*time.Minute))
 			},
-			"verify": func(t *testing.T, identity *models.Identity, provider *models.Provider, err error) {
+			"verify": func(t *testing.T, identity *models.User, provider *models.Provider, err error) {
 				assert.ErrorContains(t, err, "cannot exchange an access key for another access key with a longer lifetime")
 			},
 		},
@@ -89,13 +89,13 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 
 				return NewKeyExchangeAuthentication(bearer, time.Now().Add(1*time.Minute))
 			},
-			"verify": func(t *testing.T, identity *models.Identity, provider *models.Provider, err error) {
+			"verify": func(t *testing.T, identity *models.User, provider *models.Provider, err error) {
 				assert.ErrorContains(t, err, "user is not valid")
 			},
 		},
 		"ValidAccessKeySuccess": {
 			"setup": func(t *testing.T, db *gorm.DB) LoginMethod {
-				user := &models.Identity{Name: "cell@example.com"}
+				user := &models.User{Name: "cell@example.com"}
 				err := data.CreateIdentity(db, user)
 				assert.NilError(t, err)
 
@@ -111,7 +111,7 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 
 				return NewKeyExchangeAuthentication(bearer, time.Now().Add(1*time.Minute))
 			},
-			"verify": func(t *testing.T, identity *models.Identity, provider *models.Provider, err error) {
+			"verify": func(t *testing.T, identity *models.User, provider *models.Provider, err error) {
 				assert.NilError(t, err)
 				assert.Equal(t, identity.Name, "cell@example.com")
 				assert.Equal(t, data.InfraProvider(db).ID, provider.ID)
@@ -127,7 +127,7 @@ func TestKeyExchangeAuthentication(t *testing.T) {
 
 			identity, provider, _, err := keyExchangeLogin.Authenticate(context.Background(), db)
 
-			verifyFunc, ok := v["verify"].(func(*testing.T, *models.Identity, *models.Provider, error))
+			verifyFunc, ok := v["verify"].(func(*testing.T, *models.User, *models.Provider, error))
 			assert.Assert(t, ok)
 
 			verifyFunc(t, identity, provider, err)

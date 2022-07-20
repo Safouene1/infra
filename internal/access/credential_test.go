@@ -14,7 +14,7 @@ func TestSettingsPasswordRequirements(t *testing.T) {
 	c, db, _ := setupAccessTestContext(t)
 
 	username := "bruce@example.com"
-	user := &models.Identity{Name: username}
+	user := &models.User{Name: username}
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
 
@@ -63,7 +63,7 @@ func TestCreateCredential(t *testing.T) {
 	c, db, _ := setupAccessTestContext(t)
 
 	username := "bruce@example.com"
-	user := &models.Identity{Name: username}
+	user := &models.User{Name: username}
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
 
@@ -79,7 +79,7 @@ func TestUpdateCredentials(t *testing.T) {
 	c, db, _ := setupAccessTestContext(t)
 
 	username := "bruce@example.com"
-	user := &models.Identity{Name: username}
+	user := &models.User{Name: username}
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
 

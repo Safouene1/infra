@@ -12,7 +12,7 @@ import (
 )
 
 type LoginMethod interface {
-	Authenticate(ctx context.Context, db *gorm.DB) (*models.Identity, *models.Provider, AuthScope, error)
+	Authenticate(ctx context.Context, db *gorm.DB) (*models.User, *models.Provider, AuthScope, error)
 	Name() string                             // Name returns the name of the authentication method used
 	RequiresUpdate(db *gorm.DB) (bool, error) // Temporary way to check for one time password re-use, remove with #1441
 }

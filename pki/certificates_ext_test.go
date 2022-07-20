@@ -36,7 +36,7 @@ func TestCertificateSigningWorks(t *testing.T) {
 	err = cp.RotateCA()
 	assert.NilError(t, err)
 
-	user := &models.Identity{
+	user := &models.User{
 		Model: models.Model{ID: uid.New()},
 		Name:  "joe@example.com",
 	}

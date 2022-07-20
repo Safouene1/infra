@@ -19,7 +19,7 @@ func (a *API) ListUsers(c *gin.Context, r *api.ListUsersRequest) (*api.ListRespo
 		return nil, err
 	}
 
-	result := api.NewListResponse(users, models.PaginationToResponse(p), func(identity models.Identity) api.User {
+	result := api.NewListResponse(users, models.PaginationToResponse(p), func(identity models.User) api.User {
 		return *identity.ToAPI()
 	})
 
@@ -44,7 +44,7 @@ func (a *API) GetUser(c *gin.Context, r *api.GetUserRequest) (*api.User, error) 
 
 // CreateUser creates a user with the Infra provider
 func (a *API) CreateUser(c *gin.Context, r *api.CreateUserRequest) (*api.CreateUserResponse, error) {
-	user := &models.Identity{Name: r.Name}
+	user := &models.User{Name: r.Name}
 	infraProvider := access.InfraProvider(c)
 
 	// infra identity creation should be attempted even if an identity is already known

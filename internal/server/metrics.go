@@ -23,7 +23,7 @@ func setupMetrics(db *gorm.DB) *prometheus.Registry {
 		Name:      "users",
 		Help:      "The total number of users",
 	}, []string{}, func() []metrics.Metric {
-		count, err := data.Count[models.Identity](db)
+		count, err := data.Count[models.User](db)
 		if err != nil {
 			logging.L.Warn().Err(err).Msg("users")
 			return []metrics.Metric{}

@@ -91,7 +91,7 @@ func TestDeleteProviders(t *testing.T) {
 			providerDevelop    = models.Provider{}
 			providerProduction = models.Provider{}
 			pu                 = &models.ProviderUser{}
-			user               = &models.Identity{}
+			user               = &models.User{}
 			i                  = 0
 		)
 		setup := func() {
@@ -108,7 +108,7 @@ func TestDeleteProviders(t *testing.T) {
 			assert.NilError(t, err)
 			assert.Assert(t, len(providers) >= 2)
 
-			user = &models.Identity{Name: "joe@example.com"}
+			user = &models.User{Name: "joe@example.com"}
 			err = CreateIdentity(db, user)
 			assert.NilError(t, err)
 			pu, err = CreateProviderUser(db, &providerDevelop, user)

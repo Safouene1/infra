@@ -38,7 +38,7 @@ func TestSignupEnabled(t *testing.T) {
 	t.Run("DisabledByResources", func(t *testing.T) {
 		c, db := setup(t)
 
-		err := data.CreateIdentity(db, &models.Identity{Name: "test"})
+		err := data.CreateIdentity(db, &models.User{Name: "test"})
 		assert.NilError(t, err)
 
 		enabled, err := SignupEnabled(c)
@@ -53,7 +53,7 @@ func TestSignupEnabled(t *testing.T) {
 		assert.NilError(t, err)
 		assert.Assert(t, enabled)
 
-		err = data.CreateIdentity(db, &models.Identity{Name: "test"})
+		err = data.CreateIdentity(db, &models.User{Name: "test"})
 		assert.NilError(t, err)
 
 		enabled, err = SignupEnabled(c)
@@ -72,7 +72,7 @@ func TestSignupEnabled(t *testing.T) {
 		c, db := setup(t)
 
 		// emulate an in-cluster connector by installing a connector access key
-		identity := models.Identity{Name: models.InternalInfraConnectorIdentityName}
+		identity := models.User{Name: models.InternalInfraConnectorIdentityName}
 
 		err := data.CreateIdentity(db, &identity)
 		assert.NilError(t, err)

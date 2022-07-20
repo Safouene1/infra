@@ -13,7 +13,7 @@ const (
 	InternalInfraConnectorIdentityName = "connector"
 )
 
-type Identity struct {
+type User struct {
 	Model
 
 	Name       string    `gorm:"uniqueIndex:idx_identities_name,where:deleted_at is NULL"`
@@ -25,7 +25,7 @@ type Identity struct {
 	Providers []Provider `gorm:"many2many:provider_users;"`
 }
 
-func (i *Identity) ToAPI() *api.User {
+func (i *User) ToAPI() *api.User {
 	return &api.User{
 		ID:         i.ID,
 		Created:    api.Time(i.CreatedAt),
@@ -39,6 +39,6 @@ func (i *Identity) ToAPI() *api.User {
 }
 
 // PolyID is a polymorphic name that points to both a model type and an ID
-func (i *Identity) PolyID() uid.PolymorphicID {
+func (i *User) PolyID() uid.PolymorphicID {
 	return uid.NewIdentityPolymorphicID(i.ID)
 }

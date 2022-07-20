@@ -24,16 +24,16 @@ func isIdentitySelf(c *gin.Context, userID uid.ID) (bool, error) {
 // that was used to authenticate the request.
 // Returns nil if there is no identity in the context, which likely means the
 // request was not authenticated.
-func AuthenticatedIdentity(c *gin.Context) *models.Identity {
+func AuthenticatedIdentity(c *gin.Context) *models.User {
 	if raw, ok := c.Get("identity"); ok {
-		if identity, ok := raw.(*models.Identity); ok {
+		if identity, ok := raw.(*models.User); ok {
 			return identity
 		}
 	}
 	return nil
 }
 
-func GetIdentity(c *gin.Context, id uid.ID) (*models.Identity, error) {
+func GetIdentity(c *gin.Context, id uid.ID) (*models.User, error) {
 	roles := []string{models.InfraAdminRole, models.InfraViewRole, models.InfraConnectorRole}
 	db, err := hasAuthorization(c, id, isIdentitySelf, roles...)
 	if err != nil {
@@ -43,7 +43,7 @@ func GetIdentity(c *gin.Context, id uid.ID) (*models.Identity, error) {
 	return data.GetIdentity(db.Preload("Providers"), data.ByID(id))
 }
 
-func CreateIdentity(c *gin.Context, identity *models.Identity) error {
+func CreateIdentity(c *gin.Context, identity *models.User) error {
 	db, err := RequireInfraRole(c, models.InfraAdminRole)
 	if err != nil {
 		return HandleAuthErr(err, "user", "create", models.InfraAdminRole)
@@ -52,7 +52,7 @@ func CreateIdentity(c *gin.Context, identity *models.Identity) error {
 	return data.CreateIdentity(db, identity)
 }
 
-func InfraConnectorIdentity(c *gin.Context) *models.Identity {
+func InfraConnectorIdentity(c *gin.Context) *models.User {
 	return data.InfraConnectorIdentity(getDB(c))
 }
 
@@ -101,7 +101,7 @@ func DeleteIdentity(c *gin.Context, id uid.ID) error {
 	return data.DeleteIdentity(db, id)
 }
 
-func ListIdentities(c *gin.Context, name string, groupID uid.ID, ids []uid.ID, p *models.Pagination) ([]models.Identity, error) {
+func ListIdentities(c *gin.Context, name string, groupID uid.ID, ids []uid.ID, p *models.Pagination) ([]models.User, error) {
 	roles := []string{models.InfraAdminRole, models.InfraViewRole, models.InfraConnectorRole}
 	db, err := RequireInfraRole(c, roles...)
 	if err != nil {

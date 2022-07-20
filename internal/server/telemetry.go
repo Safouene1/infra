@@ -65,7 +65,7 @@ func (t *Telemetry) Close() {
 }
 
 func (t *Telemetry) EnqueueHeartbeat() {
-	users, err := data.Count[models.Identity](t.db)
+	users, err := data.Count[models.User](t.db)
 	if err != nil {
 		logging.Debugf("%s", err.Error())
 	}

@@ -24,7 +24,7 @@ func NewPasswordCredentialAuthentication(username, password string) LoginMethod 
 	}
 }
 
-func (a *passwordCredentialAuthn) Authenticate(_ context.Context, db *gorm.DB) (*models.Identity, *models.Provider, AuthScope, error) {
+func (a *passwordCredentialAuthn) Authenticate(_ context.Context, db *gorm.DB) (*models.User, *models.Provider, AuthScope, error) {
 	scope := AuthScope{}
 	identity, err := data.GetIdentity(db, data.ByName(a.Username))
 	if err != nil {

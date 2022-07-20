@@ -16,7 +16,7 @@ import (
 	"github.com/infrahq/infra/internal/server/models"
 )
 
-func CreateCredential(c *gin.Context, user models.Identity) (string, error) {
+func CreateCredential(c *gin.Context, user models.User) (string, error) {
 	db, err := RequireInfraRole(c, models.InfraAdminRole)
 	if err != nil {
 		return "", HandleAuthErr(err, "user", "create", models.InfraAdminRole)
@@ -45,7 +45,7 @@ func CreateCredential(c *gin.Context, user models.Identity) (string, error) {
 	return tmpPassword, nil
 }
 
-func UpdateCredential(c *gin.Context, user *models.Identity, newPassword string) error {
+func UpdateCredential(c *gin.Context, user *models.User, newPassword string) error {
 	db, err := hasAuthorization(c, user.ID, isIdentitySelf, models.InfraAdminRole)
 	if err != nil {
 		return HandleAuthErr(err, "user", "update", models.InfraAdminRole)

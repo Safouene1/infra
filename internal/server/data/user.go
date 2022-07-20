@@ -11,7 +11,7 @@ import (
 	"github.com/infrahq/infra/uid"
 )
 
-func AssignIdentityToGroups(db *gorm.DB, user *models.Identity, provider *models.Provider, newGroups []string) error {
+func AssignIdentityToGroups(db *gorm.DB, user *models.User, provider *models.Provider, newGroups []string) error {
 	pu, err := GetProviderUser(db, provider.ID, user.ID)
 	if err != nil {
 		return err
@@ -94,20 +94,20 @@ func AssignIdentityToGroups(db *gorm.DB, user *models.Identity, provider *models
 	return nil
 }
 
-func CreateIdentity(db *gorm.DB, identity *models.Identity) error {
+func CreateIdentity(db *gorm.DB, identity *models.User) error {
 	return add(db, identity)
 }
 
-func GetIdentity(db *gorm.DB, selectors ...SelectorFunc) (*models.Identity, error) {
-	return get[models.Identity](db, selectors...)
+func GetIdentity(db *gorm.DB, selectors ...SelectorFunc) (*models.User, error) {
+	return get[models.User](db, selectors...)
 }
 
-func ListIdentities(db *gorm.DB, p *models.Pagination, selectors ...SelectorFunc) ([]models.Identity, error) {
-	return list[models.Identity](db, p, selectors...)
+func ListIdentities(db *gorm.DB, p *models.Pagination, selectors ...SelectorFunc) ([]models.User, error) {
+	return list[models.User](db, p, selectors...)
 }
 
 func DeleteIdentity(db *gorm.DB, id uid.ID) error {
-	return delete[models.Identity](db, id)
+	return delete[models.User](db, id)
 }
 
 func DeleteIdentities(db *gorm.DB, selectors ...SelectorFunc) error {
@@ -126,9 +126,9 @@ func DeleteIdentities(db *gorm.DB, selectors ...SelectorFunc) error {
 		}
 	}
 
-	return deleteAll[models.Identity](db, ByIDs(ids))
+	return deleteAll[models.User](db, ByIDs(ids))
 }
 
-func SaveIdentity(db *gorm.DB, identity *models.Identity) error {
+func SaveIdentity(db *gorm.DB, identity *models.User) error {
 	return save(db, identity)
 }

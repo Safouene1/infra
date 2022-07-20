@@ -103,9 +103,9 @@ func responseBodyAPIErrorWithCode(code int32) func(t *testing.T, resp *httptest.
 	}
 }
 
-func createAccessKey(t *testing.T, db *gorm.DB, email string) (string, *models.Identity) {
+func createAccessKey(t *testing.T, db *gorm.DB, email string) (string, *models.User) {
 	t.Helper()
-	user := &models.Identity{Name: email}
+	user := &models.User{Name: email}
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
 

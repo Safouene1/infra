@@ -34,7 +34,7 @@ func TestLogin(t *testing.T) {
 	// setup with user/pass login
 	// authentication method should not matter for this test
 	username := "gohan@example.com"
-	user := &models.Identity{Name: username}
+	user := &models.User{Name: username}
 	err := data.CreateIdentity(db, user)
 	assert.NilError(t, err)
 

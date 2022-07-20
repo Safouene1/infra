@@ -30,7 +30,7 @@ func NewOIDCAuthentication(providerID uid.ID, redirectURL string, code string, o
 	}
 }
 
-func (a *oidcAuthn) Authenticate(ctx context.Context, db *gorm.DB) (*models.Identity, *models.Provider, AuthScope, error) {
+func (a *oidcAuthn) Authenticate(ctx context.Context, db *gorm.DB) (*models.User, *models.Provider, AuthScope, error) {
 	provider, err := data.GetProvider(db, data.ByID(a.ProviderID))
 	if err != nil {
 		return nil, nil, AuthScope{}, err
@@ -52,7 +52,7 @@ func (a *oidcAuthn) Authenticate(ctx context.Context, db *gorm.DB) (*models.Iden
 			return nil, nil, AuthScope{}, fmt.Errorf("get user: %w", err)
 		}
 
-		identity = &models.Identity{Name: email}
+		identity = &models.User{Name: email}
 
 		if err := data.CreateIdentity(db, identity); err != nil {
 			return nil, nil, AuthScope{}, fmt.Errorf("create user: %w", err)

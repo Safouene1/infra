@@ -88,11 +88,11 @@ func TestListGroups(t *testing.T) {
 
 		createGroups(t, db, &everyone, &engineers, &product)
 
-		firstUser := models.Identity{
+		firstUser := models.User{
 			Name:   "firstly",
 			Groups: []models.Group{everyone, engineers},
 		}
-		secondUser := models.Identity{
+		secondUser := models.User{
 			Name:   "secondarly",
 			Groups: []models.Group{everyone, product},
 		}
@@ -187,15 +187,15 @@ func TestAddUsersToGroup(t *testing.T) {
 		createGroups(t, db, &everyone)
 
 		var (
-			bond = models.Identity{
+			bond = models.User{
 				Name:   "jbond@infrahq.com",
 				Groups: []models.Group{everyone},
 			}
-			bourne = models.Identity{
+			bourne = models.User{
 				Name:   "jbourne@infrahq.com",
 				Groups: []models.Group{},
 			}
-			bauer = models.Identity{Name: "jbauer@infrahq.com",
+			bauer = models.User{Name: "jbauer@infrahq.com",
 				Groups: []models.Group{},
 			}
 		)
@@ -205,7 +205,7 @@ func TestAddUsersToGroup(t *testing.T) {
 		t.Run("add identities to group", func(t *testing.T) {
 			actual, err := ListIdentities(db, &models.Pagination{}, []SelectorFunc{ByOptionalIdentityGroupID(everyone.ID)}...)
 			assert.NilError(t, err)
-			expected := []models.Identity{bond}
+			expected := []models.User{bond}
 			assert.DeepEqual(t, actual, expected, cmpModelsIdentityShallow)
 
 			err = AddUsersToGroup(db, everyone.ID, []uid.ID{bourne.ID, bauer.ID})
@@ -213,7 +213,7 @@ func TestAddUsersToGroup(t *testing.T) {
 
 			actual, err = ListIdentities(db, &models.Pagination{}, []SelectorFunc{ByOptionalIdentityGroupID(everyone.ID)}...)
 			assert.NilError(t, err)
-			expected = []models.Identity{bauer, bond, bourne}
+			expected = []models.User{bauer, bond, bourne}
 			assert.DeepEqual(t, actual, expected, cmpModelsIdentityShallow)
 		})
 	})

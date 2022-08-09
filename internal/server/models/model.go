@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -36,6 +37,7 @@ func (Model) IsAModel() {}
 func (m *Model) BeforeCreate(_ *gorm.DB) error {
 	if m.ID == 0 {
 		m.ID = uid.New()
+		fmt.Printf("ID SET TO %d\n", m.ID)
 	}
 
 	return nil

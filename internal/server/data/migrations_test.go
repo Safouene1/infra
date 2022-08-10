@@ -29,9 +29,6 @@ import (
 )
 
 func TestMigrations(t *testing.T) {
-	if testing.Short() {
-		t.Skip("too slow for -short run")
-	}
 	patch.ModelsSymmetricKey(t)
 	allMigrations := migrations()
 

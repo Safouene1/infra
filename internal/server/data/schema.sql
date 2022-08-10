@@ -113,10 +113,10 @@ CREATE TABLE organizations (
 
 CREATE TABLE password_reset_tokens (
     id bigint NOT NULL,
+    organization_id bigint,
     token text,
     identity_id bigint,
-    expires_at timestamp with time zone,
-    organization_id bigint
+    expires_at timestamp with time zone
 );
 
 CREATE TABLE provider_users (

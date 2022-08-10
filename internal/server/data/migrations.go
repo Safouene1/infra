@@ -385,7 +385,7 @@ drop index if exists idx_providers_name;
 drop index if exists idx_settings_org_id;
 drop index if exists idx_password_reset_tokens_token;
 
-alter table password_reset_tokens add column organization_id bigint;
+alter table password_reset_tokens add column IF NOT EXISTS organization_id bigint;
 
 create unique index idx_access_keys_name on access_keys (organization_id, name) where (deleted_at is null);
 create unique index idx_access_keys_key_id on access_keys (organization_id, key_id) where (deleted_at is null);

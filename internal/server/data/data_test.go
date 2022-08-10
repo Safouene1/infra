@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/rs/zerolog"
@@ -85,12 +84,6 @@ func postgresDriver(t *testing.T) gorm.Dialector {
 // Set POSTGRESQL_CONNECTION to a postgresql connection string to run tests
 // against postgresql.
 func runDBTests(t *testing.T, run func(t *testing.T, db *gorm.DB)) {
-	t.Run("sqlite", func(t *testing.T) {
-		tmp := t.TempDir()
-		sqlite, err := NewSQLiteDriver(filepath.Join(tmp, t.Name()))
-		assert.NilError(t, err, "sqlite driver")
-		run(t, setupDB(t, sqlite))
-	})
 	t.Run("postgres", func(t *testing.T) {
 		pgsql := postgresDriver(t)
 		run(t, setupDB(t, pgsql))

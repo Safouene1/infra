@@ -374,62 +374,62 @@ func scopeUniqueIndicesToOrganization() *migrator.Migration {
 		ID: "202208041772",
 		Migrate: func(tx *gorm.DB) error {
 			queries := strings.Split(`
-drop index if exists idx_access_keys_name;
-drop index if exists idx_access_keys_key_id;
-drop index if exists idx_credentials_identity_id;
-drop index if exists idx_destinations_unique_id;
-drop index if exists idx_grant_srp;
-drop index if exists idx_groups_name;
-drop index if exists idx_identities_name;
-drop index if exists idx_providers_name;
-drop index if exists idx_settings_org_id;
-drop index if exists idx_password_reset_tokens_token;
+DROP INDEX IF EXISTS idx_access_keys_name;
+DROP INDEX IF EXISTS idx_access_keys_key_id;
+DROP INDEX IF EXISTS idx_credentials_identity_id;
+DROP INDEX IF EXISTS idx_destinations_unique_id;
+DROP INDEX IF EXISTS idx_grant_srp;
+DROP INDEX IF EXISTS idx_groups_name;
+DROP INDEX IF EXISTS idx_identities_name;
+DROP INDEX IF EXISTS idx_providers_name;
+DROP INDEX IF EXISTS idx_settings_org_id;
+DROP INDEX IF EXISTS idx_password_reset_tokens_token;
 
-alter table password_reset_tokens add column IF NOT EXISTS organization_id bigint;
+ALTER TABLE password_reset_tokens ADD COLUMN IF NOT EXISTS organization_id BIGINT;
 
-create unique index idx_access_keys_name on access_keys (organization_id, name) where (deleted_at is null);
-create unique index idx_access_keys_key_id on access_keys (organization_id, key_id) where (deleted_at is null);
-create unique index idx_credentials_identity_id ON credentials ("organization_id","identity_id") where (deleted_at is null);
-create unique index idx_destinations_unique_id ON destinations ("organization_id","unique_id") where (deleted_at is null);
-create unique index idx_grant_srp ON grants ("organization_id","subject","privilege","resource") where (deleted_at is null);
-create unique index idx_groups_name ON groups ("organization_id","name") where (deleted_at is null);
-create unique index idx_identities_name ON identities ("organization_id","name") where (deleted_at is null);
-create unique index idx_providers_name ON providers ("organization_id","name") where (deleted_at is null);
-create unique index idx_settings_org_id ON settings ("organization_id") where deleted_at is null;
+create unique index idx_access_keys_name ON access_keys (organization_id, name) WHERE (deleted_at IS NULL);
+create unique index idx_access_keys_key_id ON access_keys (organization_id, key_id) WHERE (deleted_at IS NULL);
+create unique index idx_credentials_identity_id ON credentials ("organization_id","identity_id") WHERE (deleted_at IS NULL);
+create unique index idx_destinations_unique_id ON destinations ("organization_id","unique_id") WHERE (deleted_at IS NULL);
+create unique index idx_grant_srp ON grants ("organization_id","subject","privilege","resource") WHERE (deleted_at IS NULL);
+create unique index idx_groups_name ON groups ("organization_id","name") WHERE (deleted_at IS NULL);
+create unique index idx_identities_name ON identities ("organization_id","name") WHERE (deleted_at IS NULL);
+create unique index idx_providers_name ON providers ("organization_id","name") WHERE (deleted_at IS NULL);
+create unique index idx_settings_org_id ON settings ("organization_id") WHERE deleted_at IS NULL;
 create unique index idx_password_reset_tokens_token ON password_reset_tokens (organization_id, token);
 create unique index idx_orgs_domain ON organizations (domain);
 
-drop table if exists identities_organizations;
+DROP TABLE IF EXISTS identities_organizations;
 
-alter table "settings" alter column "id" drop default;
-alter table "providers" alter column "id" drop default;
-alter table "organizations" alter column "id" drop default;
-alter table "access_keys" alter column "id" drop default;
-alter table "credentials" alter column "id" drop default;
-alter table "destinations" alter column "id" drop default;
-alter table "encryption_keys" alter column "id" drop default;
-alter table "grants" alter column "id" drop default;
-alter table "groups" alter column "id" drop default;
-alter table "identities" alter column "id" drop default;
-alter table "password_reset_tokens" alter column "id" drop default;
+ALTER TABLE "settings" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "providers" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "organizations" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "access_keys" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "credentials" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "destinations" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "encryption_keys" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "grants" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "groups" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "identities" ALTER COLUMN "id" DROP DEFAULT;
+ALTER TABLE "password_reset_tokens" ALTER COLUMN "id" DROP DEFAULT;
 
-alter table provider_users DROP CONSTRAINT "fk_provider_users_provider";
-alter table provider_users DROP CONSTRAINT "fk_provider_users_identity";
-alter table identities_groups DROP CONSTRAINT "fk_identities_groups_identity";
-alter table identities_groups DROP CONSTRAINT "fk_identities_groups_group";
-alter table access_keys DROP CONSTRAINT "fk_access_keys_issued_for_identity";
+ALTER TABLE provider_users DROP CONSTRAINT "fk_provider_users_provider";
+ALTER TABLE provider_users DROP CONSTRAINT "fk_provider_users_identity";
+ALTER TABLE identities_groups DROP CONSTRAINT "fk_identities_groups_identity";
+ALTER TABLE identities_groups DROP CONSTRAINT "fk_identities_groups_group";
+ALTER TABLE access_keys DROP CONSTRAINT "fk_access_keys_issued_for_identity";
 
-drop sequence access_keys_id_seq;
-drop sequence credentials_id_seq;
-drop sequence destinations_id_seq;
-drop sequence encryption_keys_id_seq;
-drop sequence grants_id_seq;
-drop sequence groups_id_seq;
-drop sequence identities_id_seq;
-drop sequence organizations_id_seq;
-drop sequence providers_id_seq;
-drop sequence settings_id_seq;
-drop sequence password_reset_tokens_id_seq;
+DROP SEQUENCE access_keys_id_seq;
+DROP SEQUENCE credentials_id_seq;
+DROP SEQUENCE destinations_id_seq;
+DROP SEQUENCE encryption_keys_id_seq;
+DROP SEQUENCE grants_id_seq;
+DROP SEQUENCE groups_id_seq;
+DROP SEQUENCE identities_id_seq;
+DROP SEQUENCE organizations_id_seq;
+DROP SEQUENCE providers_id_seq;
+DROP SEQUENCE settings_id_seq;
+DROP SEQUENCE password_reset_tokens_id_seq;
 			`, ";\n")
 			// note running these one line at a time makes for _much_ better errors when one line fails.
 			for _, query := range queries {

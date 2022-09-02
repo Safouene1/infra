@@ -35,8 +35,12 @@ func GetDestination(c *gin.Context, id uid.ID) (*models.Destination, error) {
 
 func ListDestinations(c *gin.Context, uniqueID, name string, p *data.Pagination) ([]models.Destination, error) {
 	db := getDB(c)
-	return data.ListDestinations(db, p, data.ByOptionalUniqueID(uniqueID),
-		data.ByOptionalName(name))
+
+	selectors := []data.SelectorFunc{data.ByOptionalName(name)}
+	if uniqueID != "" {
+		selectors = append(selectors, data.ByUniqueID(uniqueID))
+	}
+	return data.ListDestinations(db, p, selectors...)
 }
 
 func DeleteDestination(c *gin.Context, id uid.ID) error {

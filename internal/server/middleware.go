@@ -37,35 +37,29 @@ func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 	}
 }
 
-func handleInfraDestinationHeader(c *gin.Context) error {
+func handleInfraDestinationHeader(c *gin.Context, tx *data.Transaction) error {
 	uniqueID := c.Request.Header.Get("Infra-Destination")
 	if uniqueID == "" {
 		return nil
 	}
 
-	// TODO: use GetDestination(ByUniqueID())
-	destinations, err := access.ListDestinations(c, uniqueID, "", &data.Pagination{Limit: 1})
-	if err != nil {
-		return err
-	}
-
-	switch len(destinations) {
-	case 0:
+	destination, err := data.GetDestination(tx, data.ByUniqueID(uniqueID))
+	switch {
+	case errors.Is(err, internal.ErrNotFound):
 		// destination does not exist yet, noop
 		return nil
-	case 1:
-		destination := destinations[0]
-		// only save if there's significant difference between LastSeenAt and Now
-		if time.Since(destination.LastSeenAt) > time.Second {
-			destination.LastSeenAt = time.Now()
-			if err := access.SaveDestination(c, &destination); err != nil {
-				return fmt.Errorf("failed to update destination lastSeenAt: %w", err)
-			}
-		}
-		return nil
-	default:
-		return fmt.Errorf("multiple destinations found for unique ID %q", uniqueID)
+	case err != nil:
+		return fmt.Errorf("lookup destination: %w", err)
 	}
+
+	// only save if there's significant difference between LastSeenAt and Now
+	if time.Since(destination.LastSeenAt) > time.Second {
+		destination.LastSeenAt = time.Now()
+		if err := access.SaveDestination(c, destination); err != nil {
+			return fmt.Errorf("failed to update destination lastSeenAt: %w", err)
+		}
+	}
+	return nil
 }
 
 // authenticatedMiddleware is applied to all routes that require authentication.

@@ -65,13 +65,9 @@ func ByName(name string) SelectorFunc {
 	}
 }
 
-func ByOptionalUniqueID(nodeID string) SelectorFunc {
+func ByUniqueID(uniqueID string) SelectorFunc {
 	return func(db *gorm.DB) *gorm.DB {
-		if len(nodeID) > 0 {
-			return db.Where("unique_id = ?", nodeID)
-		}
-
-		return db
+		return db.Where("unique_id = ?", uniqueID)
 	}
 }
 

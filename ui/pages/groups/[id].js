@@ -197,10 +197,10 @@ export default function GroupDetails() {
         count={totalCount}
         data={users}
         empty='No users'
-        onPageChange={({ pageIndex }) => {
+        onPageChange={p => {
           router.push({
             pathname: router.pathname,
-            query: { ...router.query, p: pageIndex + 1 },
+            query: { ...router.query, p: p + 1 },
           })
         }}
         columns={[

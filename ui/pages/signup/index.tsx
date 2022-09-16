@@ -3,7 +3,13 @@ import { useState } from 'react'
 import { useServerConfig } from '../../lib/serverconfig'
 
 import Login from '../../components/layouts/login'
-import ErrorMessage from '../../components/error-message'
+
+type FieldErrors = {
+  name: string
+  password: string
+  organization: string
+  domain: string
+}
 
 export default function Signup() {
   const [name, setName] = useState('')
@@ -13,7 +19,7 @@ export default function Signup() {
   const [automaticOrgDomain, setAutomaticOrgDomain] = useState(true) // track if the user has manually specified the org domain
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState('')
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState({} as FieldErrors)
 
   const { baseDomain } = useServerConfig()
 
@@ -42,18 +48,16 @@ export default function Signup() {
       // redirect to the new org subdomain
       let created = await res.json()
 
-      window.location = `${window.location.protocol}//${created?.organization?.domain}`
+      window.location.href = `${window.location.protocol}//${created?.organization?.domain}`
     } catch (e) {
       setSubmitted(false)
-      if (e.fieldErrors) {
-        const errors = {}
-        for (const error of e.fieldErrors) {
-          errors[error.fieldName.toLowerCase()] =
-            error.errors[0] || 'invalid value'
+
+      for (const k in errors) {
+        for (const fe of e.fieldErrors) {
+          if (k === fe.fieldName) {
+            errors[k] = fe.errors[0]
+          }
         }
-        setErrors(errors)
-      } else {
-        setError(e.message)
       }
     }
 
@@ -92,14 +96,16 @@ export default function Signup() {
               type='email'
               onChange={e => {
                 setName(e.target.value)
-                setErrors({})
+                setErrors({} as FieldErrors)
                 setError('')
               }}
               className={`mt-1 block w-full rounded-md  shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
                 errors.name ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.name && <ErrorMessage message={errors.name} />}
+            {errors.name && (
+              <p className='my-1 text-xs text-red-500'>{errors.name}</p>
+            )}
           </div>
           <div className='w-full'>
             <label
@@ -114,14 +120,16 @@ export default function Signup() {
               type='password'
               onChange={e => {
                 setPassword(e.target.value)
-                setErrors({})
+                setErrors({} as FieldErrors)
                 setError('')
               }}
               className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
                 errors.password ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.password && <ErrorMessage message={errors.password} />}
+            {errors.password && (
+              <p className='my-1 text-xs text-red-500'>{errors.password}</p>
+            )}
           </div>
           <div className='w-full'>
             <label
@@ -136,17 +144,19 @@ export default function Signup() {
               type='text'
               onChange={e => {
                 setOrgName(e.target.value)
-                setErrors({})
+                setErrors({} as FieldErrors)
                 setError('')
                 if (automaticOrgDomain) {
                   setSubDomain(getURLSafeDomain(e.target.value))
                 }
               }}
               className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                errors.org?.name ? 'border-red-500' : 'border-gray-300'
+                errors.organization ? 'border-red-500' : 'border-gray-300'
               }`}
             />
-            {errors.org?.name && <ErrorMessage message={errors.orgs?.name} />}
+            {errors.name && (
+              <p className='my-1 text-xs text-red-500'>{errors.name}</p>
+            )}
           </div>
           <div className='w-full'>
             <label
@@ -166,7 +176,7 @@ export default function Signup() {
                 onChange={e => {
                   setSubDomain(getURLSafeDomain(e.target.value))
                   setAutomaticOrgDomain(false) // do not set this automatically once it has been specified
-                  setErrors({})
+                  setErrors({} as FieldErrors)
                   setError('')
                 }}
                 className={`block w-full min-w-0 rounded-l-lg px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
@@ -177,7 +187,9 @@ export default function Signup() {
                 .{baseDomain}
               </span>
             </div>
-            {errors.domain && <ErrorMessage message={errors.domain} />}
+            {errors.domain && (
+              <p className='my-1 text-xs text-red-500'>{errors.domain}</p>
+            )}
           </div>
         </div>
         <button
@@ -187,7 +199,7 @@ export default function Signup() {
         >
           Sign Up
         </button>
-        {error && <ErrorMessage message={error} />}
+        {error && <p className='my-1 text-xs text-red-500'>{error}</p>}
         <div className='my-3 text-center text-2xs text-gray-400'>
           By continuing, you agree to Infra&apos;s{' '}
           <a

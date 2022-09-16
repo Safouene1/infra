@@ -14,6 +14,11 @@ import DeleteModal from '../../components/delete-modal'
 import Table from '../../components/table'
 import Dashboard from '../../components/layouts/dashboard'
 
+type User = {
+  id: string
+  name: string
+}
+
 function UsersAddDialog({ setOpen, onAdded = () => {} }) {
   const [email, setEmail] = useState('')
   const [success, setSuccess] = useState(false)
@@ -41,7 +46,7 @@ function UsersAddDialog({ setOpen, onAdded = () => {} }) {
 
       setSuccess(true)
       setPassword(user.oneTimePassword)
-      onAdded(user)
+      onAdded()
     } catch (e) {
       if (e.code === 409) {
         setError('user with this email already exists')
@@ -75,10 +80,7 @@ function UsersAddDialog({ setOpen, onAdded = () => {} }) {
                   <label className='text-2xs font-medium text-gray-700'>
                     Temporary Password
                   </label>
-                  <span
-                    readOnly
-                    className='round-md my-0 w-full py-1 font-mono text-xs text-gray-600 focus:outline-none'
-                  >
+                  <span className='round-md my-0 w-full py-1 font-mono text-xs text-gray-600 focus:outline-none'>
                     {password}
                   </span>
                 </div>
@@ -155,7 +157,7 @@ function UsersAddDialog({ setOpen, onAdded = () => {} }) {
 
 export default function Users() {
   const router = useRouter()
-  const page = Math.max(parseInt(router.query.p) || 1, 1)
+  const page = Math.max(+router.query.p || 1, 1)
   const limit = 20
   const { data: { items: users, totalPages, totalCount } = {}, mutate } =
     useSWR(`/api/users?page=${page}&limit=${limit}`)
@@ -222,15 +224,15 @@ export default function Users() {
 
       {/* Table */}
       <Table
-        onPageChange={({ pageIndex }) => {
+        onPageChange={p => {
           router.push({
             pathname: router.pathname,
-            query: { ...router.query, p: pageIndex + 1 },
+            query: { ...router.query, p: p + 1 },
           })
         }}
         count={totalCount}
         pageCount={totalPages}
-        pageIndex={parseInt(page) - 1}
+        pageIndex={page - 1}
         pageSize={limit}
         data={users}
         columns={[
@@ -240,7 +242,7 @@ export default function Users() {
                 {info.getValue()}
               </div>
             ),
-            header: <span>Name</span>,
+            header: () => <span>Name</span>,
             accessorKey: 'name',
           },
           {
@@ -303,8 +305,8 @@ export default function Users() {
             id: 'actions',
             cell: function Cell(info) {
               const [open, setOpen] = useState(false)
-              let [referenceElement, setReferenceElement] = useState()
-              let [popperElement, setPopperElement] = useState()
+              let [referenceElement, setReferenceElement] = useState(null)
+              let [popperElement, setPopperElement] = useState(null)
               let { styles, attributes } = usePopper(
                 referenceElement,
                 popperElement,
@@ -327,14 +329,14 @@ export default function Users() {
                 <div className='flex justify-end'>
                   <Menu as='div' className='relative inline-block text-left'>
                     <Menu.Button
-                      ref={setReferenceElement}
+                      ref={ref => setReferenceElement(ref)}
                       className='cursor-pointer rounded-md border border-transparent px-1 text-gray-400 hover:bg-gray-50 hover:text-gray-600 group-hover:border-gray-200 group-hover:text-gray-500 group-hover:shadow-md group-hover:shadow-gray-300/20'
                     >
                       <DotsHorizontalIcon className='z-0 h-[18px]' />
                     </Menu.Button>
                     {ReactDOM.createPortal(
                       <div
-                        ref={setPopperElement}
+                        ref={ref => setPopperElement(ref)}
                         style={styles.popper}
                         {...attributes.popper}
                       >

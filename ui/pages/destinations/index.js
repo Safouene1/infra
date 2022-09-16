@@ -49,10 +49,10 @@ export default function Destinations() {
         pageSize={limit}
         data={destinations}
         empty='No infrastructure'
-        onPageChange={({ pageIndex }) => {
+        onPageChange={p => {
           router.push({
             pathname: router.pathname,
-            query: { ...router.query, p: pageIndex + 1 },
+            query: { ...router.query, p: p + 1 },
           })
         }}
         columns={[

@@ -18,7 +18,7 @@ export default function Login({ children }) {
       // using an OTP doesn't trigger authentication
       router.replace('/')
     }
-    return false
+    return null
   }
 
   return (

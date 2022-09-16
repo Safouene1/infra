@@ -1,14 +1,21 @@
 import {
+  ColumnDef,
   flexRender,
   getCoreRowModel,
+  PaginationState,
+  RowData,
+  Row,
   useReactTable,
+  Pagination,
 } from '@tanstack/react-table'
+import { useState } from 'react'
 import Link from 'next/link'
+import { useEffect } from 'react'
 
 export default function Table({
   columns,
   data,
-  href,
+  href = () => '',
   empty = 'No data',
   count = data?.length,
 
@@ -16,7 +23,17 @@ export default function Table({
   pageSize = 999,
   pageIndex = 0,
   pageCount = 1,
-  onPageChange,
+  onPageChange = () => {},
+}: {
+  columns: ColumnDef<RowData, any>[]
+  href: (row: Row<RowData>) => string
+  data: RowData[]
+  empty: string
+  count: number
+  pageSize: number
+  pageIndex: number
+  pageCount: number
+  onPageChange: (page: number) => void
 }) {
   const table = useReactTable({
     data,
@@ -29,13 +46,14 @@ export default function Table({
         pageIndex,
       },
     },
-    onPaginationChange: f =>
-      onPageChange(
-        f({
-          pageSize,
-          pageIndex,
-        })
-      ),
+    onPaginationChange: updater => {
+      if (typeof updater === 'function') {
+        onPageChange(updater({ pageIndex, pageSize }).pageIndex)
+        return
+      }
+
+      onPageChange(updater.pageIndex)
+    },
     manualPagination: true,
   })
 
@@ -79,7 +97,7 @@ export default function Table({
                   >
                     {href ? (
                       <Link href={href(row)}>
-                        <a tabIndex='-1' className='block px-5 py-2'>
+                        <a tabIndex={-1} className='block px-5 py-2'>
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext()

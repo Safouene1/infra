@@ -736,7 +736,6 @@ DELETE FROM settings WHERE id=24567;
 					(10009, 'with.dot.no.more'),
 					(10010, 'no-dots')`)
 				assert.NilError(t, err)
-
 			},
 			cleanup: func(t *testing.T, db WriteTxn) {
 				_, err := db.Exec("DELETE FROM destinations")
@@ -755,6 +754,12 @@ DELETE FROM settings WHERE id=24567;
 		},
 		{
 			label: testCaseLine("2022-10-05T11:12"),
+			expected: func(t *testing.T, db WriteTxn) {
+				// schema changes are tested with schema comparison
+			},
+		},
+		{
+			label: testCaseLine("2022-09-28T13:00"),
 			expected: func(t *testing.T, db WriteTxn) {
 				// schema changes are tested with schema comparison
 			},

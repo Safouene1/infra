@@ -72,6 +72,7 @@ func migrations() []*migrator.Migration {
 		fixProviderUserIndex(),
 		removeDotFromDestinationName(),
 		destinationNameUnique(),
+		addProviderUserSCIMFields(),
 		// next one here
 	}
 }
@@ -750,6 +751,24 @@ func destinationNameUnique() *migrator.Migration {
 					"delete the duplicate destination before proceeding with this upgrade: %w", err)
 			}
 			return nil
+		},
+	}
+}
+
+func addProviderUserSCIMFields() *migrator.Migration {
+	return &migrator.Migration{
+		ID: "2022-09-28T13:00",
+		Migrate: func(tx migrator.DB) error {
+			stmt := `
+				ALTER TABLE provider_users
+				ADD COLUMN IF NOT EXISTS given_name text,
+				ADD COLUMN IF NOT EXISTS family_name text,
+				ADD COLUMN IF NOT EXISTS active boolean DEFAULT true;
+
+				CREATE UNIQUE INDEX IF NOT EXISTS idx_emails_providers ON provider_users (email, provider_id);
+			`
+			_, err := tx.Exec(stmt)
+			return err
 		},
 	}
 }

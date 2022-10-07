@@ -6,10 +6,20 @@ import (
 	"github.com/infrahq/infra/api"
 	"github.com/infrahq/infra/internal/access"
 	"github.com/infrahq/infra/internal/server/data"
+	"github.com/infrahq/infra/internal/server/models"
 )
 
 var listProviderUsersRoute = route[api.SCIMParametersRequest, *api.ListProviderUsersResponse]{
 	handler: ListProviderUsers,
+	routeSettings: routeSettings{
+		omitFromTelemetry:          true,
+		omitFromDocs:               true,
+		infraVersionHeaderOptional: true,
+	},
+}
+
+var provisionProviderUserRoute = route[api.ProvisionSCIMUserRequest, *api.SCIMUser]{
+	handler: ProvisionProviderUser,
 	routeSettings: routeSettings{
 		omitFromTelemetry:          true,
 		omitFromDocs:               true,
@@ -36,4 +46,17 @@ func ListProviderUsers(c *gin.Context, r *api.SCIMParametersRequest) (*api.ListP
 		result.Resources = append(result.Resources, *user.ToAPI())
 	}
 	return result, nil
+}
+
+func ProvisionProviderUser(c *gin.Context, r *api.ProvisionSCIMUserRequest) (*api.SCIMUser, error) {
+	user := &models.ProviderUser{
+		Email:      r.UserName,
+		GivenName:  r.Name.GivenName,
+		FamilyName: r.Name.FamilyName,
+	}
+	err := access.ProvisionProviderUser(c, user)
+	if err != nil {
+		return nil, err
+	}
+	return user.ToAPI(), nil
 }

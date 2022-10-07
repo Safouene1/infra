@@ -65,3 +65,17 @@ type ListProviderUsersResponse struct {
 	StartIndex   int        `json:"startIndex"`
 	ItemsPerPage int        `json:"itemsPerPage"`
 }
+
+type ProvisionSCIMUserRequest struct {
+	Schemas  []string        `json:"schemas"`
+	UserName string          `json:"userName"`
+	Name     SCIMUserName    `json:"name"`
+	Emails   []SCIMUserEmail `json:"emails"`
+}
+
+func (r ProvisionSCIMUserRequest) ValidationRules() []validate.ValidationRule {
+	return []validate.ValidationRule{
+		validate.Required("schemas", r.Schemas),
+		validate.Email("userName", r.UserName),
+	}
+}

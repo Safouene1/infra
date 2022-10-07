@@ -184,6 +184,30 @@ func GetProviderUser(tx ReadTxn, providerID, identityID uid.ID) (*models.Provide
 	return (*models.ProviderUser)(pu), nil
 }
 
+func ProvisionProviderUser(tx GormTxn, user *models.ProviderUser) error {
+	// check that the provider ID is valid
+	provider, err := GetProvider(tx, ByID(user.ProviderID))
+	if err != nil {
+		return fmt.Errorf("failed to look-up scim provider: %w", err)
+	}
+	// create an identity if this is the first time we are seeing the user with this email
+	identity, err := GetIdentity(tx, ByName(user.Email))
+	if err != nil {
+		if !errors.Is(err, internal.ErrNotFound) {
+			return fmt.Errorf("get existing user on provision: %w", err)
+		}
+
+		identity = &models.Identity{Name: user.Email}
+
+		if err := CreateIdentity(tx, identity); err != nil {
+			return fmt.Errorf("create identity on provision: %w", err)
+		}
+	}
+	//lint:ignore SA4006 reassign pointer
+	user, err = CreateProviderUser(tx, provider, identity)
+	return err
+}
+
 func SyncProviderUser(ctx context.Context, tx GormTxn, user *models.Identity, provider *models.Provider, oidcClient providers.OIDCClient) error {
 	providerUser, err := GetProviderUser(tx, provider.ID, user.ID)
 	if err != nil {

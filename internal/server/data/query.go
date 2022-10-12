@@ -53,7 +53,7 @@ type Selectable interface {
 	ScanFields() []any
 }
 
-func insert(tx WriteTxn, items ...Insertable) error {
+func insert[T Insertable](tx WriteTxn, items ...T) error {
 	if len(items) == 0 {
 		return fmt.Errorf("insert required at least 1 item")
 	}

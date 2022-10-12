@@ -44,7 +44,7 @@ func TestInsert(t *testing.T) {
 	tx := &txnCapture{}
 	err := insert(tx, e)
 	assert.NilError(t, err)
-	expected := `INSERT INTO examples ( id, first, age ) VALUES ( ?, ?, ? ); `
+	expected := `INSERT INTO examples ( id, first, age ) VALUES  ( ?, ?, ? ) ; `
 	assert.Equal(t, tx.query, expected)
 	expectedArgs := []any{uid.ID(123), "first", 111}
 	assert.DeepEqual(t, tx.args, expectedArgs)

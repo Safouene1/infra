@@ -53,19 +53,35 @@ type Selectable interface {
 	ScanFields() []any
 }
 
-func insert(tx WriteTxn, item Insertable) error {
-	if err := item.OnInsert(); err != nil {
-		return err
+func insert(tx WriteTxn, items ...Insertable) error {
+	if len(items) == 0 {
+		return fmt.Errorf("insert required at least 1 item")
 	}
-	setOrg(tx, item)
+
+	for _, item := range items {
+		if err := item.OnInsert(); err != nil {
+			return err
+		}
+		setOrg(tx, item)
+	}
+
+	item := items[0]
 
 	query := querybuilder.New("INSERT INTO")
 	query.B(item.Table())
 	query.B("(")
 	query.B(columnsForInsert(item))
-	query.B(") VALUES (")
-	query.B(placeholderForColumns(item), item.Values()...)
-	query.B(");")
+	query.B(") VALUES ")
+
+	for i, item := range items {
+		query.B("(")
+		query.B(placeholderForColumns(item), item.Values()...)
+		query.B(")")
+		if i+1 != len(items) {
+			query.B(",")
+		}
+	}
+	query.B(";")
 	_, err := tx.Exec(query.String(), query.Args...)
 	return handleError(err)
 }

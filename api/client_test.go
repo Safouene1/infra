@@ -161,6 +161,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestListGrants(t *testing.T) {
+	reqCh := make(chan *http.Request, 1)
 	handler := func(resp http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			resp.WriteHeader(http.StatusInternalServerError)
@@ -169,6 +170,7 @@ func TestListGrants(t *testing.T) {
 
 		switch r.URL.Path {
 		case "/api/grants":
+			reqCh <- r
 			resp.Header().Set("Last-Update-Index", "10010")
 			resp.WriteHeader(http.StatusOK)
 			_, _ = resp.Write([]byte(`{}`))
@@ -186,9 +188,15 @@ func TestListGrants(t *testing.T) {
 	}
 
 	t.Run("sets value from Last-Update-Index header", func(t *testing.T) {
-		resp, err := c.ListGrants(ListGrantsRequest{Resource: "anything"})
+		resp, err := c.ListGrants(ListGrantsRequest{
+			Resource:        "anything",
+			BlockingRequest: BlockingRequest{LastUpdateIndex: 1234},
+		})
 		assert.NilError(t, err)
 
 		assert.Equal(t, resp.LastUpdateIndex.Index, int64(10010))
+
+		req := <-reqCh
+		assert.Equal(t, req.URL.Query().Get("lastUpdateIndex"), "1234")
 	})
 }

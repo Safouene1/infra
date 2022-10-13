@@ -188,14 +188,7 @@ func Run(ctx context.Context, options Options) error {
 		options:     options,
 	}
 	group.Go(func() error {
-		for {
-			if err := syncWithServer(con); err != nil {
-				return err
-			}
-			if err := wait(ctx, 30*time.Second); err != nil {
-				return err
-			}
-		}
+		return syncWithServer(ctx, con)
 	})
 	group.Go(func() error {
 		for {
@@ -403,19 +396,52 @@ func getEndpointHostPort(k8s *kubernetes.Kubernetes, opts Options) (types.HostPo
 	return types.HostPort{Host: host, Port: port}, nil
 }
 
-func syncWithServer(con connector) error {
-	grants, err := con.client.ListGrants(api.ListGrantsRequest{Destination: con.destination.Name})
-	if err != nil {
-		logging.Errorf("error listing grants: %v", err)
+func syncWithServer(ctx context.Context, con connector) error {
+	var latestIndex int64 = 1
+
+	sync := func() error {
+		grants, err := con.client.ListGrants(api.ListGrantsRequest{
+			Destination:     con.destination.Name,
+			BlockingRequest: api.BlockingRequest{LastUpdateIndex: latestIndex},
+		})
+		var apiError api.Error
+		switch {
+		case errors.As(err, &apiError) && apiError.Code == http.StatusGatewayTimeout:
+			// a timeout is expected when there are no changes
+			logging.L.Info().
+				Int64("updateIndex", latestIndex).
+				Msgf("no updated grants from server")
+			return nil
+		case err != nil:
+			return fmt.Errorf("list grants: %w", err)
+		}
+		logging.L.Info().
+			Int64("updateIndex", latestIndex).
+			Int("numGrants", len(grants.Items)).
+			Msgf("received grants from server")
+
+		err = updateRoles(con.client, con.k8s, grants.Items)
+		if err != nil {
+			return fmt.Errorf("update roles: %w", err)
+		}
+
+		// Only update latestIndex once the entire operation was a success
+		latestIndex = grants.LastUpdateIndex.Index
 		return nil
 	}
 
-	err = updateRoles(con.client, con.k8s, grants.Items)
-	if err != nil {
-		logging.Errorf("error updating grants: %v", err)
-		return nil
+	for {
+		if err := sync(); err != nil {
+			logging.L.Error().Err(err).Msg("sync grants with kubernetes")
+		}
+		// TODO: exponential backoff when there are errors.
+
+		// sleep for a short duration between updates to allow batches of
+		// updates to apply before querying again.
+		if err := wait(ctx, 2*time.Second); err != nil {
+			return err
+		}
 	}
-	return nil
 }
 
 // UpdateRoles converts infra grants to role-bindings in the current cluster

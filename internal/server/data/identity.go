@@ -14,7 +14,7 @@ import (
 	"github.com/infrahq/infra/uid"
 )
 
-func AssignIdentityToGroups(tx GormTxn, user *models.Identity, provider *models.Provider, newGroups []string) error {
+func AssignIdentityToGroups(tx WriteTxn, user *models.Identity, provider *models.Provider, newGroups []string) error {
 	pu, err := GetProviderUser(tx, provider.ID, user.ID)
 	if err != nil {
 		return err
@@ -120,16 +120,12 @@ func GetIdentity(db GormTxn, selectors ...SelectorFunc) (*models.Identity, error
 	return get[models.Identity](db, selectors...)
 }
 
-func SetIdentityVerified(db GormTxn, token string) error {
+func SetIdentityVerified(db WriteTxn, token string) error {
 	q := querybuilder.New(`UPDATE identities SET verified = true`)
 	q.B("WHERE verified = ? AND verification_token = ? AND organization_id = ?", false, token, db.OrganizationID())
 
 	_, err := db.Exec(q.String(), q.Args...)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func ListIdentities(db GormTxn, p *Pagination, selectors ...SelectorFunc) ([]models.Identity, error) {

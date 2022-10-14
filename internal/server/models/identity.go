@@ -26,8 +26,8 @@ type Identity struct {
 	VerificationToken string
 
 	// for eager loading, don't use these for saving.
-	Groups    []Group    `gorm:"many2many:identities_groups"`
-	Providers []Provider `gorm:"many2many:provider_users;"`
+	Groups    []Group    `db:"-" gorm:"many2many:identities_groups"`
+	Providers []Provider `db:"-" gorm:"many2many:provider_users;"`
 }
 
 func (i *Identity) ToAPI() *api.User {

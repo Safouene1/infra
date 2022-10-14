@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/infrahq/infra/internal"
+	"github.com/infrahq/infra/internal/generate"
 	"github.com/infrahq/infra/internal/server/data/querybuilder"
 	"github.com/infrahq/infra/internal/server/models"
 	"github.com/infrahq/infra/uid"
@@ -130,8 +131,11 @@ func AssignIdentityToGroups(tx WriteTxn, user *models.Identity, provider *models
 	return nil
 }
 
-func CreateIdentity(db GormTxn, identity *models.Identity) error {
-	return add(db, identity)
+func CreateIdentity(tx WriteTxn, identity *models.Identity) error {
+	if identity.VerificationToken == "" {
+		identity.VerificationToken = generate.MathRandom(10, generate.CharsetAlphaNumeric)
+	}
+	return insert(tx, (*identitiesTable)(identity))
 }
 
 func GetIdentity(db GormTxn, selectors ...SelectorFunc) (*models.Identity, error) {
@@ -150,8 +154,8 @@ func ListIdentities(db GormTxn, p *Pagination, selectors ...SelectorFunc) ([]mod
 	return list[models.Identity](db, p, selectors...)
 }
 
-func SaveIdentity(db GormTxn, identity *models.Identity) error {
-	return save(db, identity)
+func UpdateIdentity(tx WriteTxn, identity *models.Identity) error {
+	return update(tx, (*identitiesTable)(identity))
 }
 
 func DeleteIdentities(tx GormTxn, providerID uid.ID, selectors ...SelectorFunc) error {

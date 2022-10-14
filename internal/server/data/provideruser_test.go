@@ -347,7 +347,12 @@ func TestListProviderUsers(t *testing.T) {
 
 				providerID, p, expected, totalCount := tc.setup(t, tx)
 
-				result, err := ListProviderUsers(tx, providerID, p)
+				opts := ListProviderUsersOptions{
+					ProviderID: providerID,
+					Params:     p,
+				}
+
+				result, err := ListProviderUsers(tx, opts)
 
 				assert.NilError(t, err)
 				assert.DeepEqual(t, result, expected, cmpTimeWithDBPrecision)

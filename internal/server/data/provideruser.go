@@ -94,27 +94,40 @@ func UpdateProviderUser(tx WriteTxn, providerUser *models.ProviderUser) error {
 	return handleError(err)
 }
 
-func ListProviderUsers(tx ReadTxn, providerID uid.ID, p *SCIMParameters) ([]models.ProviderUser, error) {
+type ListProviderUsersOptions struct {
+	ProviderID uid.ID
+	ActiveOnly bool
+	Params     *SCIMParameters
+}
+
+func ListProviderUsers(tx ReadTxn, opts ListProviderUsersOptions) ([]models.ProviderUser, error) {
+	if opts.ProviderID == 0 {
+		return nil, fmt.Errorf("ListProviderUsers must specify provider_id")
+	}
+
 	table := &providerUserTable{}
 	query := querybuilder.New("SELECT")
 	query.B(columnsForSelect(table))
-	if p != nil {
+	if opts.Params != nil {
 		query.B(", count(*) OVER()")
 	}
 	query.B("FROM")
 	query.B(table.Table())
 	query.B("INNER JOIN providers ON provider_users.provider_id = providers.id AND providers.organization_id = ?", tx.OrganizationID())
-	query.B("WHERE provider_id = ?", providerID)
+	query.B("WHERE provider_id = ?", opts.ProviderID)
+	if opts.ActiveOnly {
+		query.B("AND active = true")
+	}
 
 	query.B("ORDER BY email ASC")
 
-	if p != nil {
+	if opts.Params != nil {
 		// apply scim parameters
-		if p.Count != 0 {
-			query.B("LIMIT ?", p.Count)
+		if opts.Params.Count != 0 {
+			query.B("LIMIT ?", opts.Params.Count)
 		}
-		if p.StartIndex > 0 {
-			offset := p.StartIndex - 1 // start index begins at 1, not 0
+		if opts.Params.StartIndex > 0 {
+			offset := opts.Params.StartIndex - 1 // start index begins at 1, not 0
 			query.B("OFFSET ?", offset)
 		}
 	}
@@ -125,8 +138,8 @@ func ListProviderUsers(tx ReadTxn, providerID uid.ID, p *SCIMParameters) ([]mode
 	}
 	result, err := scanRows(rows, func(pu *models.ProviderUser) []any {
 		fields := (*providerUserTable)(pu).ScanFields()
-		if p != nil {
-			fields = append(fields, &p.TotalCount)
+		if opts.Params != nil {
+			fields = append(fields, &opts.Params.TotalCount)
 		}
 		return fields
 	})
@@ -134,8 +147,8 @@ func ListProviderUsers(tx ReadTxn, providerID uid.ID, p *SCIMParameters) ([]mode
 		return nil, fmt.Errorf("scan provider users: %w", err)
 	}
 
-	if p != nil && p.Count == 0 {
-		p.Count = p.TotalCount
+	if opts.Params != nil && opts.Params.Count == 0 {
+		opts.Params.Count = opts.Params.TotalCount
 	}
 
 	return result, nil

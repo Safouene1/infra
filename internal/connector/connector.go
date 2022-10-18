@@ -27,6 +27,7 @@ import (
 	"github.com/infrahq/infra/internal/kubernetes"
 	"github.com/infrahq/infra/internal/logging"
 	"github.com/infrahq/infra/metrics"
+	"github.com/infrahq/infra/uid"
 )
 
 type Options struct {
@@ -78,10 +79,23 @@ type KubernetesOptions struct {
 // connector stores all the dependencies for the connector operations.
 type connector struct {
 	k8s         *kubernetes.Kubernetes
-	client      *api.Client
+	client      apiClient
 	destination *api.Destination
 	certCache   *CertCache
 	options     Options
+}
+
+type apiClient interface {
+	ListGrants(req api.ListGrantsRequest) (*api.ListResponse[api.Grant], error)
+	ListDestinations(req api.ListDestinationsRequest) (*api.ListResponse[api.Destination], error)
+	CreateDestination(req *api.CreateDestinationRequest) (*api.Destination, error)
+	UpdateDestination(req api.UpdateDestinationRequest) (*api.Destination, error)
+
+	// GetGroup and GetUser are used to retrieve the name of the group or user.
+	// TODO: we can remove these calls to GetGroup and GetUser by including
+	// the name of the group or user in the ListGrants response.
+	GetGroup(id uid.ID) (*api.Group, error)
+	GetUser(id uid.ID) (*api.User, error)
 }
 
 func Run(ctx context.Context, options Options) error {
@@ -445,7 +459,7 @@ func syncWithServer(ctx context.Context, con connector) error {
 }
 
 // UpdateRoles converts infra grants to role-bindings in the current cluster
-func updateRoles(c *api.Client, k *kubernetes.Kubernetes, grants []api.Grant) error {
+func updateRoles(c apiClient, k *kubernetes.Kubernetes, grants []api.Grant) error {
 	logging.Debugf("syncing local grants from infra configuration")
 
 	crSubjects := make(map[string][]rbacv1.Subject)                           // cluster-role: subject
@@ -517,7 +531,7 @@ func updateRoles(c *api.Client, k *kubernetes.Kubernetes, grants []api.Grant) er
 }
 
 // createOrUpdateDestination creates a destination in the infra server if it does not exist and updates it if it does
-func createOrUpdateDestination(client *api.Client, local *api.Destination) error {
+func createOrUpdateDestination(client apiClient, local *api.Destination) error {
 	if local.ID != 0 {
 		return updateDestination(client, local)
 	}
@@ -551,7 +565,7 @@ func createOrUpdateDestination(client *api.Client, local *api.Destination) error
 }
 
 // updateDestination updates a destination in the infra server
-func updateDestination(client *api.Client, local *api.Destination) error {
+func updateDestination(client apiClient, local *api.Destination) error {
 	logging.Debugf("updating information at server")
 
 	request := api.UpdateDestinationRequest{

@@ -254,11 +254,14 @@ func TestCertCache_Certificate(t *testing.T) {
 }
 
 func TestSyncGrantsToKubeBindings(t *testing.T) {
-	t.Skip()
 	ctx := context.Background()
 	waiter := &fakeWaiter{}
 	fakeK8s := &fakeKubeClient{}
-	fakeAPI := &fakeAPIClient{}
+	fakeAPI := &fakeAPIClient{
+		listGrantsResult: &api.ListResponse[api.Grant]{
+			LastUpdateIndex: api.LastUpdateIndex{Index: 1},
+		},
+	}
 	con := connector{
 		k8s:         fakeK8s,
 		client:      fakeAPI,
@@ -270,23 +273,22 @@ func TestSyncGrantsToKubeBindings(t *testing.T) {
 }
 
 type fakeWaiter struct {
-	count  int
+	index  int
 	resets []int
 }
 
 func (f *fakeWaiter) Reset() {
-	f.resets = append(f.resets, f.count)
-	f.count = 0
+	f.resets = append(f.resets, f.index)
 }
 
 func (f *fakeWaiter) Wait(ctx context.Context) error {
-	if f.count > 10 {
+	if f.index > 10 {
 		return errDone
 	}
 	if ctx.Err() != nil {
 		return errDone
 	}
-	f.count++
+	f.index++
 	return nil
 }
 
@@ -295,12 +297,12 @@ var errDone = fmt.Errorf("done")
 type fakeAPIClient struct {
 	api.Client
 
-	listGrantsResult []api.Grant
+	listGrantsResult *api.ListResponse[api.Grant]
 	listGrantsError  error
 }
 
 func (f *fakeAPIClient) ListGrants(ctx context.Context, req api.ListGrantsRequest) (*api.ListResponse[api.Grant], error) {
-	return &api.ListResponse[api.Grant]{Items: f.listGrantsResult}, f.listGrantsError
+	return f.listGrantsResult, f.listGrantsError
 }
 
 func (f *fakeAPIClient) GetGroup(id uid.ID) (*api.Group, error) {

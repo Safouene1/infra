@@ -76,7 +76,14 @@ func ErrorStatusCode(err error) int32 {
 	return 0
 }
 
-func request[Req, Res any](client Client, method string, path string, query Query, reqBody *Req) (*Res, error) {
+func request[Req, Res any](
+	ctx context.Context,
+	client Client,
+	method string,
+	path string,
+	query Query,
+	reqBody *Req,
+) (*Res, error) {
 	var body []byte
 
 	if reqBody != nil {
@@ -92,6 +99,7 @@ func request[Req, Res any](client Client, method string, path string, query Quer
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 
 	req.URL.RawQuery = url.Values(query).Encode()
 
@@ -166,23 +174,23 @@ type readsResponseHeader interface {
 }
 
 func get[Res any](client Client, path string, query Query) (*Res, error) {
-	return request[EmptyRequest, Res](client, http.MethodGet, path, query, nil)
+	return request[EmptyRequest, Res](context.TODO(), client, http.MethodGet, path, query, nil)
 }
 
 func post[Req, Res any](client Client, path string, req *Req) (*Res, error) {
-	return request[Req, Res](client, http.MethodPost, path, Query{}, req)
+	return request[Req, Res](context.TODO(), client, http.MethodPost, path, Query{}, req)
 }
 
 func put[Req, Res any](client Client, path string, req *Req) (*Res, error) {
-	return request[Req, Res](client, http.MethodPut, path, Query{}, req)
+	return request[Req, Res](context.TODO(), client, http.MethodPut, path, Query{}, req)
 }
 
 func patch[Req, Res any](client Client, path string, req *Req) (*Res, error) {
-	return request[Req, Res](client, http.MethodPatch, path, Query{}, req)
+	return request[Req, Res](context.TODO(), client, http.MethodPatch, path, Query{}, req)
 }
 
 func delete(client Client, path string, query Query) error {
-	_, err := request[EmptyRequest, EmptyResponse](client, http.MethodDelete, path, query, nil)
+	_, err := request[EmptyRequest, EmptyResponse](context.TODO(), client, http.MethodDelete, path, query, nil)
 	return err
 }
 
@@ -284,8 +292,8 @@ func (c Client) DeleteProvider(id uid.ID) error {
 	return delete(c, fmt.Sprintf("/api/providers/%s", id), Query{})
 }
 
-func (c Client) ListGrants(req ListGrantsRequest) (*ListResponse[Grant], error) {
-	return get[ListResponse[Grant]](c, "/api/grants", Query{
+func (c Client) ListGrants(ctx context.Context, req ListGrantsRequest) (*ListResponse[Grant], error) {
+	q := Query{
 		"user":            {req.User.String()},
 		"group":           {req.Group.String()},
 		"resource":        {req.Resource},
@@ -296,7 +304,12 @@ func (c Client) ListGrants(req ListGrantsRequest) (*ListResponse[Grant], error) 
 		"page":            {strconv.Itoa(req.Page)},
 		"limit":           {strconv.Itoa(req.Limit)},
 		"lastUpdateIndex": {strconv.FormatInt(req.LastUpdateIndex, 10)},
-	})
+	}
+	return request[EmptyRequest, ListResponse[Grant]](ctx, c, http.MethodGet, "/api/grants", q, nil)
+}
+
+func (c Client) ListGrantsOld(req ListGrantsRequest) (*ListResponse[Grant], error) {
+	return c.ListGrants(context.TODO(), req)
 }
 
 func (c Client) CreateGrant(req *CreateGrantRequest) (*CreateGrantResponse, error) {

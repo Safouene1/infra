@@ -67,7 +67,7 @@ func updateKubeConfig(client *api.Client, id uid.ID) error {
 		return err
 	}
 
-	grants, err := listAll(client.ListGrants, api.ListGrantsRequest{User: id, ShowInherited: true})
+	grants, err := listAll(client.ListGrantsOld, api.ListGrantsRequest{User: id, ShowInherited: true})
 	if err != nil {
 		return err
 	}

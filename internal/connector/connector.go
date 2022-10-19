@@ -88,7 +88,7 @@ type connector struct {
 }
 
 type apiClient interface {
-	ListGrants(req api.ListGrantsRequest) (*api.ListResponse[api.Grant], error)
+	ListGrants(ctx context.Context, req api.ListGrantsRequest) (*api.ListResponse[api.Grant], error)
 	ListDestinations(req api.ListDestinationsRequest) (*api.ListResponse[api.Destination], error)
 	CreateDestination(req *api.CreateDestinationRequest) (*api.Destination, error)
 	UpdateDestination(req api.UpdateDestinationRequest) (*api.Destination, error)
@@ -441,7 +441,7 @@ func syncGrantsToKubeBindings(ctx context.Context, con connector, waiter waiter)
 	var latestIndex int64 = 1
 
 	sync := func() error {
-		grants, err := con.client.ListGrants(api.ListGrantsRequest{
+		grants, err := con.client.ListGrants(ctx, api.ListGrantsRequest{
 			Destination:     con.destination.Name,
 			BlockingRequest: api.BlockingRequest{LastUpdateIndex: latestIndex},
 		})

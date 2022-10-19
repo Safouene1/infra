@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -90,7 +91,7 @@ func newGrantsListCmd(cli *CLI) *cobra.Command {
 				listReq.Group = group.ID
 			}
 
-			grants, err := listAll(client.ListGrants, listReq)
+			grants, err := listAll(client.ListGrantsOld, listReq)
 			if err != nil {
 				return err
 			}
@@ -269,7 +270,7 @@ func removeGrant(cli *CLI, cmdOptions grantsCmdOptions) error {
 	}
 
 	logging.Debugf("call server: list grants %#v", listGrantsReq)
-	grants, err := client.ListGrants(listGrantsReq)
+	grants, err := client.ListGrants(context.TODO(), listGrantsReq)
 	if err != nil {
 		if api.ErrorStatusCode(err) == 403 {
 			logging.Debugf("%s", err.Error())

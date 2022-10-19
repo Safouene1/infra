@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -188,7 +189,7 @@ func TestListGrants(t *testing.T) {
 	}
 
 	t.Run("sets value from Last-Update-Index header", func(t *testing.T) {
-		resp, err := c.ListGrants(ListGrantsRequest{
+		resp, err := c.ListGrants(context.Background(), ListGrantsRequest{
 			Resource:        "anything",
 			BlockingRequest: BlockingRequest{LastUpdateIndex: 1234},
 		})

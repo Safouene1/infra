@@ -421,6 +421,21 @@ func UpdateIdentity(tx WriteTxn, identity *models.Identity) error {
 	return update(tx, (*identitiesTable)(identity))
 }
 
+type UserPublicKey struct {
+	ID          uid.ID
+	UserID      uid.ID
+	PublicKey   string
+	Fingerprint string
+}
+
+func AddPublicKey(tx WriteTxn, key UserPublicKey) error {
+	stmt := `
+INSERT INTO user_public_keys(id, user_id, public_key, fingerprint)
+VALUES(? ,? ,? , ?)`
+	_, err := tx.Exec(stmt, key.ID, key.UserID, key.PublicKey, key.Fingerprint)
+	return err
+}
+
 type DeleteIdentitiesOptions struct {
 	ByID         uid.ID
 	ByIDs        []uid.ID

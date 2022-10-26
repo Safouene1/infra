@@ -813,6 +813,12 @@ DELETE FROM settings WHERE id=24567;
 				// schema changes are tested with schema comparison
 			},
 		},
+		{
+			label: testCaseLine("2022-10-26T18:00"),
+			expected: func(t *testing.T, tx WriteTxn) {
+				// TODO:
+			},
+		},
 	}
 
 	ids := make(map[string]struct{}, len(testCases))

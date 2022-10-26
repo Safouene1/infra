@@ -274,6 +274,16 @@ CREATE TABLE settings (
     organization_id bigint
 );
 
+CREATE TABLE user_public_keys (
+    id bigint NOT NULL,
+    user_id bigint NOT NULL,
+    fingerprint text NOT NULL,
+    public_key text NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
 ALTER TABLE ONLY access_keys
     ADD CONSTRAINT access_keys_pkey PRIMARY KEY (id);
 

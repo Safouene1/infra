@@ -69,7 +69,30 @@ func migrations() []*migrator.Migration {
 		addUpdateIndexAndGrantNotify(),
 		addUpdateIndexToExistingGrants(),
 		addDeviceFlowAuthRequestTable(),
+		addPubKeyTable(),
 		// next one here
+	}
+}
+
+func addPubKeyTable() *migrator.Migration {
+	return &migrator.Migration{
+		ID: "2022-10-26T18:00",
+		Migrate: func(db migrator.DB) error {
+			stmt := `
+CREATE TABLE IF NOT EXISTS user_public_keys (
+	id bigint NOT NULL,
+	user_id bigint NOT NULL,
+	fingerprint text NOT NULL,
+	public_key text NOT NULL,
+    created_at timestamp with time zone,
+    updated_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);`
+			// TODO: add primary key
+			// TODO: add index on fingerprint
+			_, err := db.Exec(stmt)
+			return err
+		},
 	}
 }
 

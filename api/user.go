@@ -6,7 +6,8 @@ import (
 )
 
 type GetUserRequest struct {
-	ID IDOrSelf `uri:"id"`
+	ID                      IDOrSelf `uri:"id"`
+	PubKeySha256Fingerprint string   `form:"pubKeySHA256Fingerprint"`
 }
 
 func (r GetUserRequest) ValidationRules() []validate.ValidationRule {
@@ -73,4 +74,9 @@ func (req ListUsersRequest) SetPage(page int) Paginatable {
 	req.PaginationRequest.Page = page
 
 	return req
+}
+
+type AddUserPublicKeyRequest struct {
+	UserID uid.ID `uri:"id" json:"-"`
+	PubKey string `json:"publicKey"`
 }

@@ -141,6 +141,7 @@ func CreateIdentity(tx WriteTxn, identity *models.Identity) error {
 type GetIdentityOptions struct {
 	ByID          uid.ID
 	ByName        string
+	ByFingerprint string
 	LoadGroups    bool
 	LoadProviders bool
 }
@@ -154,6 +155,10 @@ func GetIdentity(tx GormTxn, opts GetIdentityOptions) (*models.Identity, error) 
 	query.B(columnsForSelect(identity))
 	query.B("FROM")
 	query.B(identity.Table())
+	if opts.ByFingerprint {
+		query.B("INNER JOIN user_public_keys ON ")
+	}
+
 	query.B("WHERE deleted_at IS NULL AND organization_id = ?", tx.OrganizationID())
 	switch {
 	case opts.ByID != 0:

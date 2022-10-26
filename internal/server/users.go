@@ -2,6 +2,8 @@ package server
 
 import (
 	"fmt"
+	"github.com/infrahq/infra/uid"
+	"golang.org/x/crypto/ssh"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -37,7 +39,7 @@ func (a *API) GetUser(c *gin.Context, r *api.GetUserRequest) (*api.User, error) 
 		}
 		r.ID.ID = iden.ID
 	}
-	identity, err := access.GetIdentity(c, r.ID.ID)
+	identity, err := access.GetIdentity(c, r.ID.ID, r.PubKeySha256Fingerprint)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +109,7 @@ func (a *API) CreateUser(c *gin.Context, r *api.CreateUserRequest) (*api.CreateU
 
 func (a *API) UpdateUser(c *gin.Context, r *api.UpdateUserRequest) (*api.User, error) {
 	// right now this endpoint can only update a user's credentials, so get the user identity
-	identity, err := access.GetIdentity(c, r.ID)
+	identity, err := access.GetIdentity(c, r.ID, "")
 	if err != nil {
 		return nil, err
 	}
@@ -121,4 +123,21 @@ func (a *API) UpdateUser(c *gin.Context, r *api.UpdateUserRequest) (*api.User, e
 
 func (a *API) DeleteUser(c *gin.Context, r *api.Resource) (*api.EmptyResponse, error) {
 	return nil, access.DeleteIdentity(c, r.ID)
+}
+
+func AddUserPublicKey(c *gin.Context, r *api.AddUserPublicKeyRequest) (*api.EmptyResponse, error) {
+	rCtx := getRequestContext(c)
+
+	key, _, _, _, err := ssh.ParseAuthorizedKey([]byte(r.PubKey))
+	if err != nil {
+		return nil, err
+	}
+
+	err = data.AddPublicKey(rCtx.DBTxn, data.UserPublicKey{
+		ID:          uid.New(),
+		UserID:      r.UserID,
+		PublicKey:   r.PubKey,
+		Fingerprint: ssh.FingerprintSHA256(key),
+	})
+	return nil, err
 }

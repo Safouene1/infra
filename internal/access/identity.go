@@ -20,7 +20,7 @@ func isIdentitySelf(rCtx RequestContext, userID uid.ID) bool {
 	return identity != nil && identity.ID == userID
 }
 
-func GetIdentity(c *gin.Context, id uid.ID) (*models.Identity, error) {
+func GetIdentity(c *gin.Context, id uid.ID, fp string) (*models.Identity, error) {
 	rCtx := GetRequestContext(c)
 	// anyone can get their own user data
 	if !isIdentitySelf(rCtx, id) {
@@ -31,7 +31,11 @@ func GetIdentity(c *gin.Context, id uid.ID) (*models.Identity, error) {
 		}
 	}
 
-	return data.GetIdentity(rCtx.DBTxn, data.GetIdentityOptions{ByID: id, LoadProviders: true})
+	return data.GetIdentity(rCtx.DBTxn, data.GetIdentityOptions{
+		ByID:          id,
+		LoadProviders: true,
+		ByFingerprint: fp,
+	})
 }
 
 func CreateIdentity(c *gin.Context, identity *models.Identity) error {

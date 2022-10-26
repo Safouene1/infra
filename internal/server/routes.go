@@ -60,6 +60,8 @@ func (s *Server) GenerateRoutes() Routes {
 	put(a, authn, "/api/users/:id", a.UpdateUser)
 	del(a, authn, "/api/users/:id", a.DeleteUser)
 
+	put(a, authn, "/api/user/public-key", AddUserPublicKey)
+
 	get(a, authn, "/api/access-keys", a.ListAccessKeys)
 	post(a, authn, "/api/access-keys", a.CreateAccessKey)
 	del(a, authn, "/api/access-keys/:id", a.DeleteAccessKey)

@@ -83,6 +83,5 @@ func (req ListUsersRequest) SetPage(page int) Paginatable {
 }
 
 type AddUserPublicKeyRequest struct {
-	UserID uid.ID `uri:"id" json:"-"`
 	PubKey string `json:"publicKey"`
 }

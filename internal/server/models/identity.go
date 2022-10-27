@@ -35,7 +35,7 @@ type Identity struct {
 }
 
 func (i *Identity) ToAPI() *api.User {
-	return &api.User{
+	u := &api.User{
 		ID:         i.ID,
 		Created:    api.Time(i.CreatedAt),
 		Updated:    api.Time(i.UpdatedAt),
@@ -45,6 +45,13 @@ func (i *Identity) ToAPI() *api.User {
 			return p.Name
 		}),
 	}
+	for _, k := range i.PublicKeys {
+		u.PublicKeys = append(u.PublicKeys, api.PublicKey{
+			Key:         k.PublicKey,
+			Fingerprint: k.Fingerprint,
+		})
+	}
+	return u
 }
 
 // PolyID is a polymorphic name that points to both a model type and an ID

@@ -135,7 +135,7 @@ func AddUserPublicKey(c *gin.Context, r *api.AddUserPublicKeyRequest) (*api.Empt
 
 	err = data.AddPublicKey(rCtx.DBTxn, models.UserPublicKey{
 		ID:          uid.New(),
-		UserID:      r.UserID,
+		UserID:      rCtx.Authenticated.User.ID,
 		PublicKey:   r.PubKey,
 		Fingerprint: ssh.FingerprintSHA256(key),
 	})

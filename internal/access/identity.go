@@ -32,9 +32,10 @@ func GetIdentity(c *gin.Context, id uid.ID, fp string) (*models.Identity, error)
 	}
 
 	return data.GetIdentity(rCtx.DBTxn, data.GetIdentityOptions{
-		ByID:          id,
-		LoadProviders: true,
-		ByFingerprint: fp,
+		ByID:           id,
+		ByFingerprint:  fp,
+		LoadProviders:  true,
+		LoadPublicKeys: true,
 	})
 }
 

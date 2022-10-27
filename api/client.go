@@ -388,8 +388,8 @@ func (c Client) UpdateSettings(req *Settings) (*Settings, error) {
 	return put[Settings, Settings](c, "/api/settings", req)
 }
 
-func (c Client) AddUserPublicKey(key *PublicKey) error {
-	_, err := put[PublicKey, EmptyResponse](c, "/api/user/public-key", key)
+func (c Client) AddUserPublicKey(key *AddUserPublicKeyRequest) error {
+	_, err := put[AddUserPublicKeyRequest, EmptyResponse](c, "/api/user/public-key", key)
 	return err
 }
 

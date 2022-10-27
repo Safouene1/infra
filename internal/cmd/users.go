@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"golang.org/x/crypto/ssh"
 	"net/mail"
+	"os"
 	"strings"
 
 	survey "github.com/AlecAivazis/survey/v2"
@@ -36,8 +38,37 @@ func newUsersCmd(cli *CLI) *cobra.Command {
 	cmd.AddCommand(newUsersEditCmd(cli))
 	cmd.AddCommand(newUsersListCmd(cli))
 	cmd.AddCommand(newUsersRemoveCmd(cli))
-	cmd.AddCommand()
+	cmd.AddCommand(newUsersAddPublicKeyCmd(cli))
 
+	return cmd
+}
+
+func newUsersAddPublicKeyCmd(cli *CLI) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:  "add-public-key FILENAME",
+		Args: ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			client, err := defaultAPIClient()
+			if err != nil {
+				return err
+			}
+
+			raw, err := os.ReadFile(args[0])
+			if err != nil {
+				return err
+			}
+
+			// TODO: warn if they are trying to send the private key
+			key, _, _, _, err := ssh.ParseAuthorizedKey(raw)
+			if err != nil {
+				return err
+			}
+
+			cli.Output("Adding key from %v with fingerprint %v",
+				args[0], ssh.FingerprintSHA256(key))
+			return client.AddUserPublicKey(&api.AddUserPublicKeyRequest{PubKey: string(raw)})
+		},
+	}
 	return cmd
 }
 

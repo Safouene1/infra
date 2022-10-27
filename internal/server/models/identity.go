@@ -30,6 +30,8 @@ type Identity struct {
 	// Providers may be populated by some queries to contain the list of
 	// providers that provide this user.
 	Providers []Provider `db:"-" gorm:"many2many:provider_users;"`
+
+	PublicKeys []UserPublicKey `db:"-" gorm:"-"`
 }
 
 func (i *Identity) ToAPI() *api.User {
@@ -48,4 +50,11 @@ func (i *Identity) ToAPI() *api.User {
 // PolyID is a polymorphic name that points to both a model type and an ID
 func (i *Identity) PolyID() uid.PolymorphicID {
 	return uid.NewIdentityPolymorphicID(i.ID)
+}
+
+type UserPublicKey struct {
+	ID          uid.ID
+	UserID      uid.ID
+	PublicKey   string
+	Fingerprint string
 }

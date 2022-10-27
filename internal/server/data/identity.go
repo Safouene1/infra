@@ -139,11 +139,12 @@ func CreateIdentity(tx WriteTxn, identity *models.Identity) error {
 }
 
 type GetIdentityOptions struct {
-	ByID          uid.ID
-	ByName        string
-	ByFingerprint string
-	LoadGroups    bool
-	LoadProviders bool
+	ByID           uid.ID
+	ByName         string
+	ByFingerprint  string
+	LoadGroups     bool
+	LoadProviders  bool
+	LoadPublicKeys bool
 }
 
 func GetIdentity(tx GormTxn, opts GetIdentityOptions) (*models.Identity, error) {
@@ -155,16 +156,18 @@ func GetIdentity(tx GormTxn, opts GetIdentityOptions) (*models.Identity, error) 
 	query.B(columnsForSelect(identity))
 	query.B("FROM")
 	query.B(identity.Table())
-	if opts.ByFingerprint {
-		query.B("INNER JOIN user_public_keys ON ")
+	if opts.ByFingerprint != "" {
+		query.B("INNER JOIN user_public_keys ON identities.id == user_public_keys.user_id")
 	}
 
 	query.B("WHERE deleted_at IS NULL AND organization_id = ?", tx.OrganizationID())
 	switch {
 	case opts.ByID != 0:
-		query.B("AND id = ?", opts.ByID)
+		query.B("AND identities.id = ?", opts.ByID)
 	case opts.ByName != "":
-		query.B("AND name = ?", opts.ByName)
+		query.B("AND identities.name = ?", opts.ByName)
+	case opts.ByFingerprint != "":
+		query.B("AND user_public_keys.fingerprint = ?", opts.ByFingerprint)
 	default:
 		return nil, fmt.Errorf("GetIdentity must specify id or name")
 	}
@@ -202,6 +205,22 @@ func GetIdentity(tx GormTxn, opts GetIdentityOptions) (*models.Identity, error) 
 			return nil, fmt.Errorf("list providers for identity: %w", err)
 		}
 		identity.Providers = providers
+	}
+
+	// TODO: use a join?
+	if opts.LoadPublicKeys {
+		stmt := `
+SELECT id, fingerprint, public_key FROM user_public_keys
+WHERE deleted_at is null AND user_id = ?`
+
+		rows, err := tx.Query(stmt, identity.ID)
+		if err != nil {
+			return nil, err
+		}
+		keys, err := scanRows(rows, func(k *models.UserPublicKey) []any {
+			return []any{&k.ID, &k.Fingerprint, &k.PublicKey}
+		})
+		identity.PublicKeys = keys
 	}
 
 	return (*models.Identity)(identity), nil
@@ -426,14 +445,7 @@ func UpdateIdentity(tx WriteTxn, identity *models.Identity) error {
 	return update(tx, (*identitiesTable)(identity))
 }
 
-type UserPublicKey struct {
-	ID          uid.ID
-	UserID      uid.ID
-	PublicKey   string
-	Fingerprint string
-}
-
-func AddPublicKey(tx WriteTxn, key UserPublicKey) error {
+func AddPublicKey(tx WriteTxn, key models.UserPublicKey) error {
 	stmt := `
 INSERT INTO user_public_keys(id, user_id, public_key, fingerprint)
 VALUES(? ,? ,? , ?)`

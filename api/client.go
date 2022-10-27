@@ -197,7 +197,8 @@ func (c Client) ListUsers(req ListUsersRequest) (*ListResponse[User], error) {
 		Query{
 			"name": {req.Name}, "group": {req.Group.String()}, "ids": ids,
 			"page": {strconv.Itoa(req.Page)}, "limit": {strconv.Itoa(req.Limit)},
-			"showSystem": {strconv.FormatBool(req.ShowSystem)},
+			"showSystem":        {strconv.FormatBool(req.ShowSystem)},
+			"pubKeyFingerprint": {req.PubKeyFingerprint},
 		})
 }
 

@@ -20,7 +20,7 @@ func isIdentitySelf(rCtx RequestContext, userID uid.ID) bool {
 	return identity != nil && identity.ID == userID
 }
 
-func GetIdentity(c *gin.Context, id uid.ID, fp string) (*models.Identity, error) {
+func GetIdentity(c *gin.Context, id uid.ID) (*models.Identity, error) {
 	rCtx := GetRequestContext(c)
 	// anyone can get their own user data
 	if !isIdentitySelf(rCtx, id) {
@@ -32,10 +32,8 @@ func GetIdentity(c *gin.Context, id uid.ID, fp string) (*models.Identity, error)
 	}
 
 	return data.GetIdentity(rCtx.DBTxn, data.GetIdentityOptions{
-		ByID:           id,
-		ByFingerprint:  fp,
-		LoadProviders:  true,
-		LoadPublicKeys: true,
+		ByID:          id,
+		LoadProviders: true,
 	})
 }
 
@@ -70,7 +68,7 @@ func DeleteIdentity(c *gin.Context, id uid.ID) error {
 	return data.DeleteIdentities(db, opts)
 }
 
-func ListIdentities(c *gin.Context, name string, groupID uid.ID, ids []uid.ID, showSystem bool, p *data.Pagination) ([]models.Identity, error) {
+func ListIdentities(c *gin.Context, name string, groupID uid.ID, ids []uid.ID, showSystem bool, fingerprint string, p *data.Pagination) ([]models.Identity, error) {
 	roles := []string{models.InfraAdminRole, models.InfraViewRole, models.InfraConnectorRole}
 	db, err := RequireInfraRole(c, roles...)
 	if err != nil {
@@ -78,11 +76,13 @@ func ListIdentities(c *gin.Context, name string, groupID uid.ID, ids []uid.ID, s
 	}
 
 	opts := data.ListIdentityOptions{
-		Pagination:    p,
-		ByName:        name,
-		ByIDs:         ids,
-		ByGroupID:     groupID,
-		LoadProviders: true,
+		Pagination:             p,
+		ByName:                 name,
+		ByIDs:                  ids,
+		ByGroupID:              groupID,
+		ByPublicKeyFingerprint: fingerprint,
+		LoadProviders:          true,
+		LoadPublicKeys:         true,
 	}
 
 	if !showSystem {

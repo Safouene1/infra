@@ -157,7 +157,7 @@ func GetIdentity(tx GormTxn, opts GetIdentityOptions) (*models.Identity, error) 
 	query.B("FROM")
 	query.B(identity.Table())
 	if opts.ByFingerprint != "" {
-		query.B("INNER JOIN user_public_keys ON identities.id == user_public_keys.user_id")
+		query.B("INNER JOIN user_public_keys ON identities.id = user_public_keys.user_id")
 	}
 
 	query.B("WHERE deleted_at IS NULL AND organization_id = ?", tx.OrganizationID())
@@ -235,16 +235,18 @@ func SetIdentityVerified(tx WriteTxn, token string) error {
 }
 
 type ListIdentityOptions struct {
-	ByID          uid.ID
-	ByIDs         []uid.ID
-	ByNotIDs      []uid.ID
-	ByName        string
-	ByNotName     string
-	ByGroupID     uid.ID
-	CreatedBy     uid.ID
-	Pagination    *Pagination
-	LoadGroups    bool
-	LoadProviders bool
+	ByID                   uid.ID
+	ByIDs                  []uid.ID
+	ByNotIDs               []uid.ID
+	ByName                 string
+	ByPublicKeyFingerprint string
+	ByNotName              string
+	ByGroupID              uid.ID
+	CreatedBy              uid.ID
+	Pagination             *Pagination
+	LoadGroups             bool
+	LoadProviders          bool
+	LoadPublicKeys         bool
 }
 
 func ListIdentities(tx GormTxn, opts ListIdentityOptions) ([]models.Identity, error) {
@@ -262,7 +264,11 @@ func ListIdentities(tx GormTxn, opts ListIdentityOptions) ([]models.Identity, er
 	if opts.ByGroupID != 0 {
 		query.B("JOIN identities_groups ON identities_groups.identity_id = id")
 	}
-	query.B("WHERE deleted_at IS NULL AND organization_id = ?", tx.OrganizationID())
+	if opts.ByPublicKeyFingerprint != "" {
+		query.B("INNER JOIN user_public_keys ON identities.id = user_public_keys.user_id")
+		query.B("AND user_public_keys.fingerprint = ?", opts.ByPublicKeyFingerprint)
+	}
+	query.B("WHERE identities.deleted_at IS NULL AND organization_id = ?", tx.OrganizationID())
 	if opts.ByID != 0 {
 		query.B("AND id = ?", opts.ByID)
 	}
@@ -318,6 +324,24 @@ func ListIdentities(tx GormTxn, opts ListIdentityOptions) ([]models.Identity, er
 	if opts.LoadProviders {
 		if err := loadIdentitiesProviders(tx, result); err != nil {
 			return nil, err
+		}
+	}
+
+	// TODO: use a join?
+	if opts.LoadPublicKeys {
+		for i, identity := range result {
+			stmt := `
+SELECT id, fingerprint, public_key FROM user_public_keys
+WHERE deleted_at is null AND user_id = ?`
+
+			rows, err := tx.Query(stmt, identity.ID)
+			if err != nil {
+				return nil, err
+			}
+			keys, err := scanRows(rows, func(k *models.UserPublicKey) []any {
+				return []any{&k.ID, &k.Fingerprint, &k.PublicKey}
+			})
+			result[i].PublicKeys = keys
 		}
 	}
 

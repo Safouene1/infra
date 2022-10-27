@@ -6,8 +6,7 @@ import (
 )
 
 type GetUserRequest struct {
-	ID                      IDOrSelf `uri:"id"`
-	PubKeySha256Fingerprint string   `form:"pubKeySHA256Fingerprint"`
+	ID IDOrSelf `uri:"id"`
 }
 
 func (r GetUserRequest) ValidationRules() []validate.ValidationRule {
@@ -32,10 +31,11 @@ type PublicKey struct {
 }
 
 type ListUsersRequest struct {
-	Name       string   `form:"name"`
-	Group      uid.ID   `form:"group"`
-	IDs        []uid.ID `form:"ids"`
-	ShowSystem bool     `form:"showSystem" note:"if true, this shows the connector and other internal users"`
+	Name              string   `form:"name"`
+	Group             uid.ID   `form:"group"`
+	IDs               []uid.ID `form:"ids"`
+	ShowSystem        bool     `form:"showSystem" note:"if true, this shows the connector and other internal users"`
+	PubKeyFingerprint string   `form:"pubKeyFingerprint"`
 	PaginationRequest
 }
 

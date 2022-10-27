@@ -19,7 +19,7 @@ import (
 
 func (a *API) ListUsers(c *gin.Context, r *api.ListUsersRequest) (*api.ListResponse[api.User], error) {
 	p := PaginationFromRequest(r.PaginationRequest)
-	users, err := access.ListIdentities(c, r.Name, r.Group, r.IDs, r.ShowSystem, &p)
+	users, err := access.ListIdentities(c, r.Name, r.Group, r.IDs, r.ShowSystem, r.PubKeyFingerprint, &p)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (a *API) GetUser(c *gin.Context, r *api.GetUserRequest) (*api.User, error) 
 		}
 		r.ID.ID = iden.ID
 	}
-	identity, err := access.GetIdentity(c, r.ID.ID, r.PubKeySha256Fingerprint)
+	identity, err := access.GetIdentity(c, r.ID.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (a *API) CreateUser(c *gin.Context, r *api.CreateUserRequest) (*api.CreateU
 	user := &models.Identity{Name: r.Name}
 
 	// infra identity creation should be attempted even if an identity is already known
-	identities, err := access.ListIdentities(c, user.Name, 0, nil, false, &data.Pagination{Limit: 2})
+	identities, err := access.ListIdentities(c, user.Name, 0, nil, false, "", &data.Pagination{Limit: 2})
 	if err != nil {
 		return nil, fmt.Errorf("list identities: %w", err)
 	}
@@ -109,7 +109,7 @@ func (a *API) CreateUser(c *gin.Context, r *api.CreateUserRequest) (*api.CreateU
 
 func (a *API) UpdateUser(c *gin.Context, r *api.UpdateUserRequest) (*api.User, error) {
 	// right now this endpoint can only update a user's credentials, so get the user identity
-	identity, err := access.GetIdentity(c, r.ID, "")
+	identity, err := access.GetIdentity(c, r.ID)
 	if err != nil {
 		return nil, err
 	}

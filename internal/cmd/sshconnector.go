@@ -55,6 +55,8 @@ func newSSHConnectorCmd(cli *CLI) *cobra.Command {
 			user := users.Items[0]
 			l.Info(fmt.Sprintf("user=%v (%v) pub keys %v", user.Name, user.ID, user.PublicKeys))
 
+			// TODO: check the local username matches the infra user with this pub key
+
 			// TODO: check grants allow access to the destination
 
 			for _, key := range user.PublicKeys {

@@ -852,6 +852,20 @@
                   },
                   "type": "array"
                 },
+                "publicKeys": {
+                  "items": {
+                    "properties": {
+                      "fingerprint": {
+                        "type": "string"
+                      },
+                      "key": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
                 "updated": {
                   "description": "formatted as an RFC3339 date-time",
                   "example": "2022-03-14T09:48:00Z",
@@ -1089,6 +1103,20 @@
                 },
                 "type": "array"
               },
+              "publicKeys": {
+                "items": {
+                  "properties": {
+                    "fingerprint": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
               "updated": {
                 "description": "formatted as an RFC3339 date-time",
                 "example": "2022-03-14T09:48:00Z",
@@ -1126,6 +1154,20 @@
           "providerNames": {
             "items": {
               "type": "string"
+            },
+            "type": "array"
+          },
+          "publicKeys": {
+            "items": {
+              "properties": {
+                "fingerprint": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
             },
             "type": "array"
           },
@@ -6173,6 +6215,13 @@
               "example": "4yJ3n3D8E2",
               "format": "uid|self",
               "pattern": "[\\da-zA-HJ-NP-Z]{1,11}|self",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pubKeySHA256Fingerprint",
+            "schema": {
               "type": "string"
             }
           }

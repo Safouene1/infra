@@ -17,12 +17,18 @@ func (r GetUserRequest) ValidationRules() []validate.ValidationRule {
 }
 
 type User struct {
-	ID            uid.ID   `json:"id"`
-	Created       Time     `json:"created"`
-	Updated       Time     `json:"updated"`
-	LastSeenAt    Time     `json:"lastSeenAt"`
-	Name          string   `json:"name"`
-	ProviderNames []string `json:"providerNames,omitempty"`
+	ID            uid.ID      `json:"id"`
+	Created       Time        `json:"created"`
+	Updated       Time        `json:"updated"`
+	LastSeenAt    Time        `json:"lastSeenAt"`
+	Name          string      `json:"name"`
+	ProviderNames []string    `json:"providerNames,omitempty"`
+	PublicKeys    []PublicKey `json:"publicKeys,omitempty"`
+}
+
+type PublicKey struct {
+	Key         string `json:"key"`
+	Fingerprint string `json:"fingerprint"`
 }
 
 type ListUsersRequest struct {

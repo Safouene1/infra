@@ -133,7 +133,7 @@ func AddUserPublicKey(c *gin.Context, r *api.AddUserPublicKeyRequest) (*api.Empt
 		return nil, err
 	}
 
-	err = data.AddPublicKey(rCtx.DBTxn, data.UserPublicKey{
+	err = data.AddPublicKey(rCtx.DBTxn, models.UserPublicKey{
 		ID:          uid.New(),
 		UserID:      r.UserID,
 		PublicKey:   r.PubKey,

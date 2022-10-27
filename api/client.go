@@ -388,6 +388,11 @@ func (c Client) UpdateSettings(req *Settings) (*Settings, error) {
 	return put[Settings, Settings](c, "/api/settings", req)
 }
 
+func (c Client) AddUserPublicKey(key *PublicKey) error {
+	_, err := put[PublicKey, EmptyResponse](c, "/api/user/public-key", key)
+	return err
+}
+
 func partialText(body []byte, limit int) string {
 	if len(body) <= limit {
 		return string(body)

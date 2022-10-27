@@ -36,6 +36,7 @@ func newUsersCmd(cli *CLI) *cobra.Command {
 	cmd.AddCommand(newUsersEditCmd(cli))
 	cmd.AddCommand(newUsersListCmd(cli))
 	cmd.AddCommand(newUsersRemoveCmd(cli))
+	cmd.AddCommand()
 
 	return cmd
 }

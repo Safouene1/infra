@@ -197,6 +197,13 @@ $ infra use development.kube-system`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			destination := args[0]
 
+			// FIXME: hack for demo
+			if destination == "myhost" {
+				homeDir, _ := os.UserHomeDir()
+				cli.Output("Using destination myhost")
+				return os.Rename(filepath.Join(homeDir, ".ssh/config-infra"), filepath.Join(homeDir, ".ssh/config"))
+			}
+
 			client, err := defaultAPIClient()
 			if err != nil {
 				return err

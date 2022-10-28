@@ -65,6 +65,7 @@ require github.com/invopop/yaml v0.1.0 // indirect
 require (
 	cloud.google.com/go/compute v1.10.0 // indirect
 	github.com/alicebob/gopher-json v0.0.0-20200520072559-a9ecdc9d1d3a // indirect
+	github.com/aws/aws-lambda-go v1.34.1 // indirect
 	github.com/aymanbagabas/go-osc52 v1.0.3 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/di-wu/parser v0.2.2 // indirect

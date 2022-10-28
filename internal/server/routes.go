@@ -113,6 +113,9 @@ func (s *Server) GenerateRoutes() Routes {
 	get(a, noAuthnNoOrg, "/api/version", a.Version)
 	get(a, noAuthnNoOrg, "/api/server-configuration", a.GetServerConfiguration)
 	post(a, noAuthnNoOrg, "/api/forgot-domain-request", a.RequestForgotDomains)
+	// audit logs, TODO: move to auth and org required
+	add(a, noAuthnNoOrg, http.MethodPost, "/api/audit", hookAuditLogsRoute)
+	add(a, noAuthnNoOrg, http.MethodGet, "/api/audit", getAuditLogsRoute)
 
 	// Device flow
 	post(a, noAuthnNoOrg, "/api/device", a.StartDeviceFlow)

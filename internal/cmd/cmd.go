@@ -257,7 +257,6 @@ func getUseCompletion(cmd *cobra.Command, args []string, toComplete string) ([]s
 	}
 
 	return validArgs, cobra.ShellCompDirectiveNoSpace
-
 }
 
 func canonicalPath(path string) (string, error) {
@@ -367,6 +366,7 @@ func NewRootCmd(cli *CLI) *cobra.Command {
 	rootCmd.AddCommand(newLogoutCmd(cli))
 	rootCmd.AddCommand(newListCmd(cli))
 	rootCmd.AddCommand(newUseCmd(cli))
+	rootCmd.AddCommand(newAuditCmd(cli))
 
 	// Management commands:
 	rootCmd.AddCommand(newDestinationsCmd(cli))

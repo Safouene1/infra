@@ -69,6 +69,7 @@ func migrations() []*migrator.Migration {
 		addUpdateIndexAndGrantNotify(),
 		addUpdateIndexToExistingGrants(),
 		addDeviceFlowAuthRequestTable(),
+		addProviderToIdentityGroups(),
 		// next one here
 	}
 }
@@ -835,6 +836,166 @@ func addDeviceFlowAuthRequestTable() *migrator.Migration {
 
 			`)
 			return err
+		},
+	}
+}
+
+func addProviderToIdentityGroups() *migrator.Migration {
+	return &migrator.Migration{
+		ID: "2022-11-01T11:11",
+		Migrate: func(tx migrator.DB) error {
+			// move group relations off of provider users to the group relation itself
+			if migrator.HasColumn(tx, "provider_users", "groups") {
+				// remove the current identities_groups primary key, need to re-create it with the provider ID accounted for
+				_, err := tx.Exec("ALTER TABLE identities_groups DROP CONSTRAINT identities_groups_pkey")
+				if err != nil {
+					return fmt.Errorf("remove identity groups pkey: %w", err)
+				}
+				_, err = tx.Exec("ALTER TABLE identities_groups ADD provider_id bigint")
+				if err != nil {
+					return fmt.Errorf("add identity group provider id: %w", err)
+				}
+				// find which group memberships came from identity providers and create their provider groups
+				type userProviderGroups struct {
+					IdentityID uid.ID
+					ProviderID uid.ID
+					Groups     models.CommaSeparatedStrings
+				}
+				stmt := `
+					SELECT identity_id, provider_id, groups
+					FROM provider_users
+					WHERE groups != ''
+				`
+				rows, err := tx.Query(stmt)
+				if err != nil {
+					return fmt.Errorf("migrate existing provider groups: %w", err)
+				}
+
+				users := []userProviderGroups{}
+				for rows.Next() {
+					var groupProviderUser userProviderGroups
+					if err := rows.Scan(&groupProviderUser.IdentityID, &groupProviderUser.ProviderID, &groupProviderUser.Groups); err != nil {
+						return err
+					}
+
+					users = append(users, groupProviderUser)
+				}
+
+				for _, u := range users {
+					var orgID uid.ID
+					if err := tx.QueryRow(`SELECT organization_id FROM providers WHERE id = ?`, u.ProviderID).Scan(&orgID); err != nil {
+						return err
+					}
+					for _, group := range u.Groups {
+						// start by, getting the corresponding infra group which already exists
+						var grpID uid.ID
+						err := tx.QueryRow(`SELECT id FROM groups WHERE name = ? AND organization_id = ? AND deleted_at IS NULL`, group, orgID).Scan(&grpID)
+						if err != nil {
+							return err
+						}
+						// find the group membership that was previously created for this user
+						var existing uid.ID
+						err = tx.QueryRow(`
+							SELECT group_id FROM identities_groups 
+							WHERE identity_id = ? AND group_id = ? AND provider_id IS NULL`,
+							u.IdentityID, grpID).Scan(&existing)
+						if err != nil {
+							if !strings.Contains(err.Error(), "no rows in result set") {
+								return err
+							}
+							// this user is a member of this group in multiple providers, create another record
+							_, err = tx.Exec(`
+								INSERT INTO identities_groups (identity_id, group_id, provider_id)
+								VALUES (?, ?, ?)
+								`,
+								u.IdentityID, grpID, u.ProviderID)
+							if err != nil {
+								return fmt.Errorf("create group relation for provider user: %w", err)
+							}
+						} else {
+							_, err = tx.Exec(`
+								UPDATE identities_groups 
+								SET identity_id = $1, group_id = $2, provider_id = $3
+								WHERE identity_id = $1 AND group_id = $2 AND provider_id IS NULL
+								`,
+								u.IdentityID, grpID, u.ProviderID)
+							if err != nil {
+								return fmt.Errorf("update group with provider: %w", err)
+							}
+						}
+					}
+				}
+
+				// add the infra provider ID for each org to the remaining group memberships
+				// populate the new columns on the existing identities_groups relations that came from Infra
+				stmt = `
+					SELECT id, organization_id, identity_id
+					FROM groups
+					JOIN identities_groups ON id = group_id
+					WHERE provider_id IS NULL AND deleted_at IS NULL
+				`
+				rows, err = tx.Query(stmt)
+				if err != nil {
+					return fmt.Errorf("migrate existing identity groups: %w", err)
+				}
+
+				type infraGroupMember struct {
+					GroupID    uid.ID
+					OrgID      uid.ID
+					IdentityID uid.ID
+				}
+				infraGroupMembers := []infraGroupMember{}
+				for rows.Next() {
+					var g infraGroupMember
+					if err := rows.Scan(&g.GroupID, &g.OrgID, &g.IdentityID); err != nil {
+						return err
+					}
+
+					infraGroupMembers = append(infraGroupMembers, g)
+				}
+
+				if rows.Err() != nil {
+					return err
+				}
+
+				if err := rows.Close(); err != nil {
+					return err
+				}
+
+				for _, member := range infraGroupMembers {
+					stmt = `
+						SELECT id
+						FROM providers
+						WHERE organization_id = ? AND name = 'infra';
+					`
+
+					var orgInfraProviderID uid.ID
+					if err := tx.QueryRow(stmt, member.OrgID).Scan(&orgInfraProviderID); err != nil {
+						return err
+					}
+
+					stmt = `
+						UPDATE identities_groups
+						SET provider_id = ?
+						WHERE group_id = ? AND identity_id = ? AND provider_id IS NULL
+					`
+					_, err = tx.Exec(stmt, orgInfraProviderID, member.GroupID, member.IdentityID)
+					if err != nil {
+						return fmt.Errorf("add provider info to identity groups: %w", err)
+					}
+				}
+
+				// we dont care about the groups column on provider users anymore
+				_, err = tx.Exec("ALTER TABLE provider_users DROP COLUMN IF EXISTS groups")
+				if err != nil {
+					return fmt.Errorf("remove provider_user groups: %w", err)
+				}
+				_, err = tx.Exec("CREATE UNIQUE INDEX idx_identities_groups ON identities_groups(identity_id, group_id, provider_id)")
+				if err != nil {
+					return fmt.Errorf("add identities groups index: %w", err)
+				}
+			}
+			return nil
 		},
 	}
 }

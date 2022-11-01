@@ -130,7 +130,7 @@ func UpdateIdentityInfoFromProvider(c RequestContext, oidc providers.OIDCClient)
 		return fmt.Errorf("user info provider: %w", err)
 	}
 
-	// get current identity provider groups and account status
+	// update current identity provider groups and account status
 	err = data.SyncProviderUser(ctx, db, identity, provider, oidc)
 	if err != nil {
 		if errors.Is(err, internal.ErrBadGateway) {

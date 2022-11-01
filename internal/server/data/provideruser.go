@@ -23,15 +23,15 @@ func (p providerUserTable) Table() string {
 }
 
 func (p providerUserTable) Columns() []string {
-	return []string{"identity_id", "provider_id", "email", "groups", "last_update", "redirect_url", "access_token", "refresh_token", "expires_at", "given_name", "family_name", "active"}
+	return []string{"identity_id", "provider_id", "email", "last_update", "redirect_url", "access_token", "refresh_token", "expires_at", "given_name", "family_name", "active"}
 }
 
 func (p providerUserTable) Values() []any {
-	return []any{p.IdentityID, p.ProviderID, p.Email, p.Groups, p.LastUpdate, p.RedirectURL, p.AccessToken, p.RefreshToken, p.ExpiresAt, p.GivenName, p.FamilyName, p.Active}
+	return []any{p.IdentityID, p.ProviderID, p.Email, p.LastUpdate, p.RedirectURL, p.AccessToken, p.RefreshToken, p.ExpiresAt, p.GivenName, p.FamilyName, p.Active}
 }
 
 func (p *providerUserTable) ScanFields() []any {
-	return []any{&p.IdentityID, &p.ProviderID, &p.Email, &p.Groups, &p.LastUpdate, &p.RedirectURL, &p.AccessToken, &p.RefreshToken, &p.ExpiresAt, &p.GivenName, &p.FamilyName, &p.Active}
+	return []any{&p.IdentityID, &p.ProviderID, &p.Email, &p.LastUpdate, &p.RedirectURL, &p.AccessToken, &p.RefreshToken, &p.ExpiresAt, &p.GivenName, &p.FamilyName, &p.Active}
 }
 
 func (p *providerUserTable) OnInsert() error {

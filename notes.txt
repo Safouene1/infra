@@ -1,0 +1,43 @@
+
+Experiments
+- use pam for auth, did not work because of user input
+- using public key works better
+
+Demo
+ - ssh fails before 'infra use'
+ - works after
+ - explain the flow
+
+Flow
+- actors: user, infra server, destination
+1. 'infra use'
+  - uploads a public key to infra if no keys exists yet for the user
+  - updates the users ~/.ssh/config to use the key, and set the target user
+  - also write the ~/.ssh/infra/known_hosts from ListDestinations
+2. 'infra ssh-connector'
+  - looks up the user from the public key
+  - validate that the userID is correct
+  - validate the user has a grant for this destination
+
+Next steps / What's not solved
+- match the linux user account to the infra user
+- probably want to run it as an agent
+- authorization to groups based on grants
+- destination kind
+
+
+SSH Config
+
+Host myhost
+    IdentityFile ~/.ssh/infrasshkey
+    IdentitiesOnly yes
+    User example
+    Hostname localhost # <- long-ec2-hostname here
+    UserKnownHostsFile ~/.ssh/known_hosts # <- ~/.ssh/infra/known_hosts
+
+SSHD Config
+
+AuthorizedKeysCommand /root/infra/infra ssh-connector %f %k %t %u
+AuthorizedKeysCommandUser root
+
+

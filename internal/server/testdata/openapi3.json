@@ -2925,6 +2925,11 @@
                         },
                         {
                           "required": [
+                            "name"
+                          ]
+                        },
+                        {
+                          "required": [
                             "group"
                           ]
                         }
@@ -2934,6 +2939,9 @@
                           "example": "4yJ3n3D8E2",
                           "format": "uid",
                           "pattern": "[\\da-zA-HJ-NP-Z]{1,11}",
+                          "type": "string"
+                        },
+                        "name": {
                           "type": "string"
                         },
                         "privilege": {
@@ -2971,6 +2979,11 @@
                         },
                         {
                           "required": [
+                            "name"
+                          ]
+                        },
+                        {
+                          "required": [
                             "group"
                           ]
                         }
@@ -2980,6 +2993,9 @@
                           "example": "4yJ3n3D8E2",
                           "format": "uid",
                           "pattern": "[\\da-zA-HJ-NP-Z]{1,11}",
+                          "type": "string"
+                        },
+                        "name": {
                           "type": "string"
                         },
                         "privilege": {
@@ -3119,6 +3135,11 @@
                   },
                   {
                     "required": [
+                      "name"
+                    ]
+                  },
+                  {
+                    "required": [
                       "group"
                     ]
                   }
@@ -3128,6 +3149,9 @@
                     "example": "4yJ3n3D8E2",
                     "format": "uid",
                     "pattern": "[\\da-zA-HJ-NP-Z]{1,11}",
+                    "type": "string"
+                  },
+                  "name": {
                     "type": "string"
                   },
                   "privilege": {

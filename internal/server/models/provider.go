@@ -59,6 +59,9 @@ type Provider struct {
 	PrivateKey       EncryptedAtRest
 	ClientEmail      string
 	DomainAdminEmail string
+
+	Global   bool
+	ReadOnly bool
 }
 
 func (p *Provider) ToAPI() *api.Provider {

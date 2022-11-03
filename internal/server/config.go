@@ -78,11 +78,17 @@ func (u User) ValidationRules() []validate.ValidationRule {
 	}
 }
 
+// Global configuration that can re-used accross organizations
+type Global struct {
+	Providers []Provider
+}
+
 type Config struct {
 	DefaultOrganizationDomain string
 	Providers                 []Provider
 	Grants                    []Grant
 	Users                     []User
+	Global                    Global
 }
 
 func (c Config) ValidationRules() []validate.ValidationRule {
@@ -659,6 +665,10 @@ func (s Server) loadConfig(config Config) error {
 		return fmt.Errorf("load grants: %w", err)
 	}
 
+	if err := s.loadGlobal(tx, config.Global); err != nil {
+		return fmt.Errorf("load global config: %w", err)
+	}
+
 	return tx.Commit()
 }
 
@@ -685,6 +695,7 @@ func (s Server) loadProviders(db data.GormTxn, providers []Provider) error {
 	return nil
 }
 
+// loadProvider from config for the default org
 func (s Server) loadProvider(db data.GormTxn, input Provider) (*models.Provider, error) {
 	// provider kind is an optional field
 	kind, err := models.ParseProviderKind(input.Kind)
@@ -703,46 +714,7 @@ func (s Server) loadProvider(db data.GormTxn, input Provider) (*models.Provider,
 			return nil, err
 		}
 
-		provider := &models.Provider{
-			Name:         input.Name,
-			URL:          input.URL,
-			ClientID:     input.ClientID,
-			ClientSecret: models.EncryptedAtRest(clientSecret),
-			AuthURL:      input.AuthURL,
-			Scopes:       input.Scopes,
-			Kind:         kind,
-			CreatedBy:    models.CreatedBySystem,
-
-			PrivateKey:       models.EncryptedAtRest(input.PrivateKey),
-			ClientEmail:      input.ClientEmail,
-			DomainAdminEmail: input.DomainAdminEmail,
-		}
-
-		if provider.Kind != models.ProviderKindInfra {
-			// only call the provider to resolve info if it is not known
-			if input.AuthURL == "" && len(input.Scopes) == 0 {
-				providerClient := providers.NewOIDCClient(*provider, clientSecret, "http://localhost:8301")
-				authServerInfo, err := providerClient.AuthServerInfo(context.Background())
-				if err != nil {
-					if errors.Is(err, context.DeadlineExceeded) {
-						return nil, fmt.Errorf("%w: %s", internal.ErrBadGateway, err)
-					}
-					return nil, err
-				}
-
-				provider.AuthURL = authServerInfo.AuthURL
-				provider.Scopes = authServerInfo.ScopesSupported
-			}
-
-			// check that the scopes we need are set
-			supportedScopes := make(map[string]bool)
-			for _, s := range provider.Scopes {
-				supportedScopes[s] = true
-			}
-			if !supportedScopes["openid"] || !supportedScopes["email"] {
-				return nil, fmt.Errorf("required scopes 'openid' and 'email' not found on provider %q", input.Name)
-			}
-		}
+		provider, err = getConfigProviderDetails(input, kind, clientSecret)
 
 		if err := data.CreateProvider(db, provider); err != nil {
 			return nil, err
@@ -759,6 +731,51 @@ func (s Server) loadProvider(db data.GormTxn, input Provider) (*models.Provider,
 
 	if err := data.UpdateProvider(db, provider); err != nil {
 		return nil, err
+	}
+
+	return provider, nil
+}
+
+func getConfigProviderDetails(input Provider, kind models.ProviderKind, clientSecret string) (*models.Provider, error) {
+	provider := &models.Provider{
+		Name:         input.Name,
+		URL:          input.URL,
+		ClientID:     input.ClientID,
+		ClientSecret: models.EncryptedAtRest(clientSecret),
+		AuthURL:      input.AuthURL,
+		Scopes:       input.Scopes,
+		Kind:         kind,
+		CreatedBy:    models.CreatedBySystem,
+
+		PrivateKey:       models.EncryptedAtRest(input.PrivateKey),
+		ClientEmail:      input.ClientEmail,
+		DomainAdminEmail: input.DomainAdminEmail,
+	}
+
+	if provider.Kind != models.ProviderKindInfra {
+		// only call the provider to resolve info if it is not known
+		if input.AuthURL == "" && len(input.Scopes) == 0 {
+			providerClient := providers.NewOIDCClient(*provider, clientSecret, "http://localhost:8301")
+			authServerInfo, err := providerClient.AuthServerInfo(context.Background())
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					return nil, fmt.Errorf("%w: %s", internal.ErrBadGateway, err)
+				}
+				return nil, err
+			}
+
+			provider.AuthURL = authServerInfo.AuthURL
+			provider.Scopes = authServerInfo.ScopesSupported
+		}
+
+		// check that the scopes we need are set
+		supportedScopes := make(map[string]bool)
+		for _, s := range provider.Scopes {
+			supportedScopes[s] = true
+		}
+		if !supportedScopes["openid"] || !supportedScopes["email"] {
+			return nil, fmt.Errorf("required scopes 'openid' and 'email' not found on provider %q", input.Name)
+		}
 	}
 
 	return provider, nil
@@ -927,6 +944,72 @@ func (s Server) loadUser(db data.GormTxn, input User) (*models.Identity, error) 
 	}
 
 	return identity, nil
+}
+
+func (s Server) loadGlobal(db data.GormTxn, global Global) error {
+	keep := []uid.ID{}
+
+	for _, p := range global.Providers {
+		provider, err := s.loadGlobalProvider(db, p)
+		if err != nil {
+			return err
+		}
+
+		keep = append(keep, provider.ID)
+	}
+
+	// remove any global provider previously defined by config
+	if err := data.DeleteProviders(db, data.DeleteProvidersOptions{
+		CreatedBy: models.CreatedBySystem,
+		NotIDs:    keep,
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// loadGlobalProvider loads a provider that is shared between all orgs
+func (s Server) loadGlobalProvider(db data.GormTxn, input Provider) (*models.Provider, error) {
+	kind, err := models.ParseProviderKind(input.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse provider in config load: %w", err)
+	}
+
+	clientSecret, err := secrets.GetSecret(input.ClientSecret, s.secrets)
+	if err != nil {
+		return nil, fmt.Errorf("could not load provider client secret: %w", err)
+	}
+
+	provider, err := data.GetGlobalProvider(db, kind)
+	if err != nil {
+		if !errors.Is(err, internal.ErrNotFound) {
+			return nil, err
+		}
+
+		provider, err = getConfigProviderDetails(input, kind, clientSecret)
+
+		provider.Global = true
+		provider.ReadOnly = true
+
+		if err := data.CreateGlobalProvider(db, provider); err != nil {
+			return nil, err
+		}
+
+		return provider, nil
+	}
+
+	// global provider already exists, update it
+	provider.URL = input.URL
+	provider.ClientID = input.ClientID
+	provider.ClientSecret = models.EncryptedAtRest(clientSecret)
+	provider.Kind = kind
+
+	if err := data.UpdateGlobalProvider(db, provider); err != nil {
+		return nil, err
+	}
+
+	return provider, nil
 }
 
 func (s Server) loadCredential(db data.GormTxn, identity *models.Identity, password string) error {

@@ -259,3 +259,72 @@ func CountProvidersByKind(tx ReadTxn) ([]providersCount, error) {
 		return []any{&item.Kind, &item.Count}
 	})
 }
+
+// GetGlobalProvider gets shared identity provider clients that exist outside of the org context
+func GetGlobalProvider(tx ReadTxn, kind models.ProviderKind) (*models.Provider, error) {
+	provider := &providersTable{}
+	query := querybuilder.New("SELECT")
+	query.B(columnsForSelect(provider))
+	query.B("FROM providers")
+	query.B("WHERE deleted_at is null AND global = true")
+	query.B("AND kind = ?", kind)
+
+	err := tx.QueryRow(query.String(), query.Args...).Scan(provider.ScanFields()...)
+	if err != nil {
+		return nil, handleError(err)
+	}
+	return (*models.Provider)(provider), nil
+}
+
+func validateGlobalProvider(p *models.Provider) error {
+	if !p.Global {
+		return fmt.Errorf("cannot create global provider without the global flag set")
+	}
+	if !p.ReadOnly {
+		return fmt.Errorf("cannot create global provider without the read-only flag set")
+	}
+	return validateProvider(p)
+}
+
+func CreateGlobalProvider(tx WriteTxn, provider *models.Provider) error {
+	if err := validateGlobalProvider(provider); err != nil {
+		return err
+	}
+
+	if err := provider.OnInsert(); err != nil {
+		return err
+	}
+
+	table := (*providersTable)(provider)
+
+	query := querybuilder.New("INSERT INTO")
+	query.B(table.Table())
+	query.B("(")
+	query.B(columnsForInsert(table))
+	query.B(") VALUES (")
+	query.B(placeholderForColumns(table), table.Values()...)
+	query.B(");")
+	_, err := tx.Exec(query.String(), query.Args...)
+	return handleError(err)
+}
+
+func UpdateGlobalProvider(tx WriteTxn, provider *models.Provider) error {
+	if err := validateGlobalProvider(provider); err != nil {
+		return err
+	}
+
+	if err := provider.OnUpdate(); err != nil {
+		return err
+	}
+
+	table := (*providersTable)(provider)
+
+	query := querybuilder.New("UPDATE")
+	query.B(table.Table())
+	query.B("SET")
+	query.B(columnsForUpdate(table), table.Values()...)
+	query.B("WHERE deleted_at is null")
+	query.B("AND id = ?", table.Primary())
+	_, err := tx.Exec(query.String(), query.Args...)
+	return handleError(err)
+}

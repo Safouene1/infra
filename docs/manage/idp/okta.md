@@ -57,3 +57,19 @@ While still on the screen for the application you just created navigate to the *
 Copy the **URL**, **Client ID** and **Client Secret** values and provide them into Infra's Dashboard or CLI.
 
 ![Sign On](../../images/okta-setup/connect-users-okta-okta5.png)
+
+### Configure Inbound SCIM Provisioning
+1. Go to applications and **Browse App Catalog**. 
+2. Search for `SCIM` and choose **SCIM 2.0 Test App (Header Auth)** in the results.
+3. Change the Application Label to something like Infra SCIM
+4. Click **Next** then click **Done**
+5. Go to the Provisioning Tab in your new SCIM app.
+6. Click Configure API Integration.
+7. Check the checkbox for Enable API Integration
+8. For base URL enter your Infra org URL followed by  the SCIM path `https://$your_org}infrahq.com/api/scim/v2`
+9. In another browser navigate to Providers and choose your Okta provider. Click the Generate SCIM Access Key button. Copy the resulting key.
+10. Back in the Okta browser tab, add the key in the form `Bearer ${key}` to the API Token textbox and then test the credentials. Click Save.
+11. Check the Enable checkbox for Create Users, Update User Attributes, and Deactivate Users. Click Save.
+12. Navigate to Groups under Directory and click on the Everyone group. Click the Applications tab. 
+13. Click Assign Applications and then click the Assign button next to your SCIM app.
+14. When you return to Infra you should see all the users from Okta now appear in the Users list.

@@ -12,7 +12,39 @@ import { useServerConfig } from '../../lib/serverconfig'
 import LoginLayout from '../../components/layouts/login'
 import UpdatePassword from '../../components/update-password'
 
-function oidcLogin({ id, clientID, authURL, scopes }, next) {
+export function currentBaseDomain() {
+  let domain = window.location.host
+  let parts = domain.split('.')
+  if (parts.length > 2) {
+    parts.shift() // remove the org
+    domain = parts.join('.') // join the last two parts of the domain
+  }
+  return domain
+}
+
+function currentOrg() {
+  let domain = window.location.host
+  let parts = domain.split('.')
+  if (parts.length > 2) {
+    return parts.shift() // this is the org
+  }
+  return ''
+}
+
+function persistLoginRedirectCookie(orgName) {
+  const cookies = new Cookies()
+
+  // set the cookie domain to a general base domain
+  let cookieDomain = currentBaseDomain()
+
+  cookies.set('finishLogin', orgName, {
+    path: '/',
+    domain: `.${cookieDomain}`,
+    sameSite: 'lax'
+  })
+}
+
+function oidcLogin({ id, clientID, authURL, scopes, managed }, next) {
   window.localStorage.setItem('providerID', id)
   if (next) {
     window.localStorage.setItem('next', next)
@@ -23,7 +55,12 @@ function oidcLogin({ id, clientID, authURL, scopes }, next) {
     .join('')
   window.localStorage.setItem('state', state)
 
-  const redirectURL = window.location.origin + '/login/callback'
+  let redirectURL = window.location.origin + '/login/callback'
+  if (managed) {
+    // managed oidc providers (social login) need to be sent to the base redirect URL before they are redirected to org login
+    persistLoginRedirectCookie(currentOrg())
+    redirectURL = window.location.protocol + '//' + currentBaseDomain() + '/login/redirect'
+  }
   window.localStorage.setItem('redirectURL', redirectURL)
 
   document.location.href = `${authURL}?redirect_uri=${redirectURL}&client_id=${clientID}&response_type=code&scope=${scopes.join(
@@ -43,12 +80,7 @@ export function saveToVisitedOrgs(domain, orgName) {
     })
 
     // set the cookie domain to a general base domain
-    let cookieDomain = window.location.host
-    let parts = cookieDomain.split('.')
-    if (parts.length > 2) {
-      parts.shift() // remove the org
-      cookieDomain = parts.join('.') // join the last two parts of the domain
-    }
+    let cookieDomain = currentBaseDomain()
 
     cookies.set('orgs', visitedOrgs, {
       path: '/',
@@ -60,6 +92,7 @@ export function saveToVisitedOrgs(domain, orgName) {
 export function Providers({ providers }) {
   const router = useRouter()
   const { next } = router.query
+
   return (
     <>
       <div className='mt-4 w-full text-sm'>

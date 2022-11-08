@@ -11,13 +11,14 @@ import { providers } from '../../lib/providers'
 
 import Dashboard from '../../components/layouts/dashboard'
 import SCIMKey from '../../components/scim-key'
+import AllowedDomainsForm from '../../components/allowed-domains-form'
+import AllowedDomainsTable from '../../components/allowed-domains-table'
 
 function Provider({ kind, name, currentKind }) {
   return (
     <div
-      className={`${
-        kind === currentKind ? 'bg-gray-400/20' : 'bg-white'
-      } flex cursor-pointer select-none items-center rounded-lg border border-gray-300 bg-transparent px-3
+      className={`${kind === currentKind ? 'bg-gray-400/20' : 'bg-white'
+        } flex cursor-pointer select-none items-center rounded-lg border border-gray-300 bg-transparent px-3
         py-4 hover:opacity-75`}
     >
       <img
@@ -42,6 +43,7 @@ export default function ProvidersAddDetails() {
   const [kind, setKind] = useState(
     type === undefined ? providers[0].kind : type
   )
+  const [allowedDomains, setAllowedDomains] = useState([])
   const [url, setURL] = useState('')
   const [clientID, setClientID] = useState('')
   const [clientSecret, setClientSecret] = useState('')
@@ -78,20 +80,35 @@ export default function ProvidersAddDetails() {
       domainAdminEmail: domainAdminEmail,
     }
 
+    const client = {
+      url,
+      clientID,
+      clientSecret,
+      api
+    }
+
+    let body = JSON.stringify({
+      name: name.trim(),
+      kind,
+      allowedDomains,
+    })
+
+    if (clientID !== '' && clientSecret !== '') {
+      body = JSON.stringify({
+        name: name.trim(),
+        kind,
+        client,
+        allowedDomains,
+      })
+    }
+
     try {
       await mutate(
         '/api/providers',
         async ({ items: providers } = { items: [] }) => {
           const res = await fetch('/api/providers', {
             method: 'POST',
-            body: JSON.stringify({
-              name: name.trim(),
-              url,
-              clientID,
-              clientSecret,
-              kind,
-              api,
-            }),
+            body: body,
           })
 
           const data = await jsonBody(res)
@@ -280,6 +297,28 @@ export default function ProvidersAddDetails() {
             <div className='mt-3 space-y-3'>
               <div>
                 <label className='text-2xs font-medium text-gray-700'>
+                  Allowed domains (optional)
+                </label>
+                <AllowedDomainsForm onSubmit={(domain) => {
+                  if (!allowedDomains.includes(domain)) {
+                    setAllowedDomains([
+                      domain,
+                      ...allowedDomains
+                    ])
+                  }
+                }} />
+                <AllowedDomainsTable 
+                  domains={allowedDomains} 
+                  onRemove={(domain) => {
+                    let domains = allowedDomains.filter(item => {
+                      return item !== domain
+                    })
+                    setAllowedDomains([...domains])
+                  }}
+                />
+              </div>
+              <div>
+                <label className='text-2xs font-medium text-gray-700'>
                   Name (optional)
                 </label>
                 <input
@@ -290,9 +329,8 @@ export default function ProvidersAddDetails() {
                     setErrors({})
                     setError('')
                   }}
-                  className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${errors.name ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 />
                 {errors.name && (
                   <p className='my-1 text-xs text-red-500'>{errors.name}</p>
@@ -313,9 +351,8 @@ export default function ProvidersAddDetails() {
                       setErrors({})
                       setError('')
                     }}
-                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                      errors.url ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${errors.url ? 'border-red-500' : 'border-gray-300'
+                      }`}
                   />
                   {errors.url && (
                     <p className='my-1 text-xs text-red-500'>{errors.url}</p>
@@ -341,9 +378,8 @@ export default function ProvidersAddDetails() {
                       e.preventDefault()
                     }
                   }}
-                  className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                    errors.clientid ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${errors.clientid ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 />
                 {errors.clientid && (
                   <p className='my-1 text-xs text-red-500'>{errors.clientid}</p>
@@ -363,9 +399,8 @@ export default function ProvidersAddDetails() {
                     setErrors({})
                     setError('')
                   }}
-                  className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                    errors.clientsecret ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${errors.clientsecret ? 'border-red-500' : 'border-gray-300'
+                    }`}
                 />
                 {errors.clientsecret && (
                   <p className='my-1 text-xs text-red-500'>
@@ -451,11 +486,10 @@ export default function ProvidersAddDetails() {
                       setErrors({})
                       setError('')
                     }}
-                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-                      errors.domainadminemail
-                        ? 'border-red-500'
-                        : 'border-gray-300'
-                    }`}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${errors.domainadminemail
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                      }`}
                   />
                   {errors.domainadminemail && (
                     <p className='my-1 text-xs text-red-500'>

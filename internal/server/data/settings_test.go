@@ -19,7 +19,6 @@ func TestCreateSettings(t *testing.T) {
 		assert.Assert(t, settings.ID != 0)
 		assert.Assert(t, len(settings.PrivateJWK) != 0)
 		assert.Assert(t, len(settings.PublicJWK) != 0)
-		assert.Equal(t, settings.LengthMin, 8)
 	})
 }
 func TestGetSettings(t *testing.T) {
@@ -53,8 +52,6 @@ func TestUpdateSettings(t *testing.T) {
 
 		updated := *orig // shallow copy
 		updated.PrivateJWK = "primary-key"
-		updated.LengthMin = 2
-		updated.SymbolMin = 3
 
 		err = UpdateSettings(tx, &updated)
 		assert.NilError(t, err)

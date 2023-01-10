@@ -24,11 +24,11 @@ func (s settingsTable) Columns() []string {
 }
 
 func (s settingsTable) Values() []any {
-	return []any{s.CreatedAt, s.DeletedAt, s.ID, s.LengthMin, s.LowercaseMin, s.NumberMin, s.OrganizationID, s.PrivateJWK, s.PublicJWK, s.SymbolMin, s.UpdatedAt, s.UppercaseMin}
+	return []any{s.CreatedAt, s.DeletedAt, s.ID, s.OrganizationID, s.PrivateJWK, s.PublicJWK, s.UpdatedAt}
 }
 
 func (s *settingsTable) ScanFields() []any {
-	return []any{&s.CreatedAt, &s.DeletedAt, &s.ID, &s.LengthMin, &s.LowercaseMin, &s.NumberMin, &s.OrganizationID, &s.PrivateJWK, &s.PublicJWK, &s.SymbolMin, &s.UpdatedAt, &s.UppercaseMin}
+	return []any{&s.CreatedAt, &s.DeletedAt, &s.ID, &s.OrganizationID, &s.PrivateJWK, &s.PublicJWK, &s.UpdatedAt}
 }
 
 func createSettings(tx WriteTxn, orgID uid.ID) error {
@@ -62,7 +62,6 @@ func createSettings(tx WriteTxn, orgID uid.ID) error {
 		OrganizationMember: models.OrganizationMember{OrganizationID: orgID},
 		PrivateJWK:         models.EncryptedAtRest(secs),
 		PublicJWK:          pubs,
-		LengthMin:          8,
 	}
 	return insert(tx, (*settingsTable)(settings))
 }

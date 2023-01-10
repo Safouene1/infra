@@ -2,13 +2,11 @@ package access
 
 import (
 	"testing"
-	"unicode"
 
 	"gotest.tools/v3/assert"
 
 	"github.com/infrahq/infra/internal/server/data"
 	"github.com/infrahq/infra/internal/server/models"
-	"github.com/infrahq/infra/internal/validate"
 )
 
 func TestCreateCredential(t *testing.T) {
@@ -106,124 +104,6 @@ func TestUpdateCredentials(t *testing.T) {
 	})
 }
 
-func TestHasMinimumCount(t *testing.T) {
-	assert.Assert(t, !hasMinimumCount("aB1!", 2, unicode.IsLower))
-	assert.Assert(t, !hasMinimumCount("aB1!", 2, unicode.IsUpper))
-	assert.Assert(t, !hasMinimumCount("aB1!", 2, unicode.IsNumber))
-	assert.Assert(t, !hasMinimumCount("aB1!", 2, isSymbol))
-
-	assert.Assert(t, hasMinimumCount("aaBB11!!", 2, unicode.IsLower))
-	assert.Assert(t, hasMinimumCount("aaBB11!!", 2, unicode.IsUpper))
-	assert.Assert(t, hasMinimumCount("aaBB11!!", 2, unicode.IsNumber))
-	assert.Assert(t, hasMinimumCount("aaBB11!!", 2, isSymbol))
-}
-
-func TestIsSymbol(t *testing.T) {
-	symbols := " !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-	for _, s := range symbols {
-		assert.Assert(t, isSymbol(s))
-	}
-
-	notSymbols := "abcABC123"
-	for _, ns := range notSymbols {
-		assert.Assert(t, !isSymbol(ns))
-	}
-}
-
 func TestCheckPasswordRequirements(t *testing.T) {
-	_, db, _ := setupAccessTestContext(t)
 
-	t.Run("default password requirements", func(t *testing.T) {
-		err := checkPasswordRequirements(db, "password")
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "passwor")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters"},
-		})
-	})
-
-	t.Run("uppercase letter", func(t *testing.T) {
-		settings, err := data.GetSettings(db)
-		assert.NilError(t, err)
-
-		settings.UppercaseMin = 1
-		err = data.UpdateSettings(db, settings)
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "password")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters", "1 uppercase letter"},
-		})
-	})
-
-	t.Run("number", func(t *testing.T) {
-		settings, err := data.GetSettings(db)
-		assert.NilError(t, err)
-
-		settings.NumberMin = 1
-		err = data.UpdateSettings(db, settings)
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "password")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters", "1 uppercase letter", "1 number"},
-		})
-	})
-
-	t.Run("symbol", func(t *testing.T) {
-		settings, err := data.GetSettings(db)
-		assert.NilError(t, err)
-
-		settings.SymbolMin = 1
-		err = data.UpdateSettings(db, settings)
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "password")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters", "1 uppercase letter", "1 number", "1 symbol"},
-		})
-	})
-
-	t.Run("more than 1 uppercase letter", func(t *testing.T) {
-		settings, err := data.GetSettings(db)
-		assert.NilError(t, err)
-
-		settings.UppercaseMin = 2
-		err = data.UpdateSettings(db, settings)
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "password")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters", "2 uppercase letters", "1 number", "1 symbol"},
-		})
-	})
-
-	t.Run("more than 1 number", func(t *testing.T) {
-		settings, err := data.GetSettings(db)
-		assert.NilError(t, err)
-
-		settings.NumberMin = 2
-		err = data.UpdateSettings(db, settings)
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "password")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters", "2 uppercase letters", "2 numbers", "1 symbol"},
-		})
-	})
-
-	t.Run("more than 1 symbol", func(t *testing.T) {
-		settings, err := data.GetSettings(db)
-		assert.NilError(t, err)
-
-		settings.SymbolMin = 2
-		err = data.UpdateSettings(db, settings)
-		assert.NilError(t, err)
-
-		err = checkPasswordRequirements(db, "password")
-		assert.DeepEqual(t, err, validate.Error{
-			"password": []string{"8 characters", "2 uppercase letters", "2 numbers", "2 symbols"},
-		})
-	})
 }

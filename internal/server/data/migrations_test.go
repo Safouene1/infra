@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -57,7 +56,7 @@ func TestMigrations(t *testing.T) {
 
 		if index == 0 {
 			filename := fmt.Sprintf("testdata/migrations/%v-postgres.sql", tc.label.Name)
-			raw, err := ioutil.ReadFile(filename)
+			raw, err := os.ReadFile(filename)
 			assert.NilError(t, err)
 
 			_, err = db.Exec(string(raw))
@@ -408,17 +407,16 @@ INSERT INTO provider_users (identity_id, provider_id, id, created_at, updated_at
 					LIMIT 1
 				`)
 
-				var settings models.Settings
+				var lowercaseMin, uppercaseMin, numberMin, symbolMin, lengthMin uint32
 				err := row.Scan(
-					&settings.LowercaseMin,
-					&settings.UppercaseMin,
-					&settings.NumberMin,
-					&settings.SymbolMin,
-					&settings.LengthMin,
+					&lowercaseMin,
+					&uppercaseMin,
+					&numberMin,
+					&symbolMin,
+					&lengthMin,
 				)
 				assert.NilError(t, err)
-				expected := models.Settings{LengthMin: 8}
-				assert.DeepEqual(t, settings, expected)
+				assert.Equal(t, lengthMin, 8)
 			},
 		},
 		{

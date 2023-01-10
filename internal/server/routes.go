@@ -106,8 +106,6 @@ func (s *Server) GenerateRoutes() Routes {
 	add(a, authn, http.MethodPatch, "/api/scim/v2/Users/:id", patchProviderUserRoute)
 	add(a, authn, http.MethodDelete, "/api/scim/v2/Users/:id", deleteProviderUserRoute)
 
-	put(a, authn, "/api/settings", a.UpdateSettings)
-
 	add(a, authn, http.MethodGet, "/api/debug/pprof/*profile", pprofRoute)
 
 	// no auth required, org not required
@@ -126,7 +124,6 @@ func (s *Server) GenerateRoutes() Routes {
 
 	get(a, noAuthnWithOrg, "/api/providers/:id", a.GetProvider)
 	get(a, noAuthnWithOrg, "/api/providers", a.ListProviders)
-	get(a, noAuthnWithOrg, "/api/settings", a.GetSettings)
 	add(a, noAuthnWithOrg, http.MethodGet, "/link", verifyAndRedirectRoute)
 
 	add(a, noAuthnWithOrg, http.MethodGet, "/.well-known/jwks.json", wellKnownJWKsRoute)

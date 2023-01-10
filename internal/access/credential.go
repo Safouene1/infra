@@ -3,7 +3,7 @@ package access
 import (
 	"errors"
 	"fmt"
-	"unicode"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -105,7 +105,7 @@ func updateCredential(c *gin.Context, user *models.Identity, newPassword string,
 	rCtx := GetRequestContext(c)
 	db := rCtx.DBTxn
 
-	err := checkPasswordRequirements(db, newPassword)
+	err := checkPasswordRequirements(user.Name, newPassword)
 	if err != nil {
 		return err
 	}
@@ -140,23 +140,21 @@ func updateCredential(c *gin.Context, user *models.Identity, newPassword string,
 	if isSelf {
 		// if we updated our own password, remove the password-reset scope from our access key.
 		if accessKey := rCtx.Authenticated.AccessKey; accessKey != nil {
-			accessKey.Scopes = sliceWithoutElement(accessKey.Scopes, models.ScopePasswordReset)
+			scopes := models.CommaSeparatedStrings{}
+			for _, s := range accessKey.Scopes {
+				if s != models.ScopePasswordReset {
+					scopes = append(scopes, s)
+				}
+			}
+
+			accessKey.Scopes = scopes
+
 			if err = data.UpdateAccessKey(db, accessKey); err != nil {
 				return fmt.Errorf("updating access key: %w", err)
 			}
 		}
 	}
 	return nil
-}
-
-func sliceWithoutElement(s []string, without string) []string {
-	result := []string{}
-	for _, v := range s {
-		if v != without {
-			result = append(result, v)
-		}
-	}
-	return result
 }
 
 func GetRequestContext(c *gin.Context) RequestContext {
@@ -168,60 +166,69 @@ func GetRequestContext(c *gin.Context) RequestContext {
 	return RequestContext{}
 }
 
-// list of special charaters from OWASP:
-// https://owasp.org/www-community/password-special-characters
-func isSymbol(r rune) bool {
-	return (r >= '\u0020' && r <= '\u002F') || (r >= '\u003A' && r <= '\u0040') || (r >= '\u005B' && r <= '\u0060') || (r >= '\u007B' && r <= '\u007E')
-}
-
-func hasMinimumCount(password string, min int, minCheck func(rune) bool) bool {
-	var count int
-	for _, r := range password {
-		if minCheck(r) {
-			count++
-		}
-	}
-	return count >= min
-}
-
-func checkPasswordRequirements(db data.ReadTxn, password string) error {
-	settings, err := data.GetSettings(db)
-	if err != nil {
-		return err
+func checkPasswordRequirements(user string, password string) error {
+	// minimum length
+	if len(password) < 8 {
+		return validate.Error{"password": []string{"must be at least 8 characters"}}
 	}
 
-	requirements := []struct {
-		minCount      int
-		countFunc     func(rune) bool
-		singularError string
-		pluralError   string
-	}{
-		{settings.LengthMin, func(r rune) bool { return true }, "%d character", "%d characters"},
-		{settings.LowercaseMin, unicode.IsLower, "%d lowercase letter", "%d lowercase letters"},
-		{settings.UppercaseMin, unicode.IsUpper, "%d uppercase letter", "%d uppercase letters"},
-		{settings.NumberMin, unicode.IsDigit, "%d number", "%d numbers"},
-		{settings.SymbolMin, isSymbol, "%d symbol", "%d symbols"},
+	// cannot contain user name
+	if strings.Contains(password, user) {
+		return validate.Error{"password": []string{"cannot contain user name"}}
 	}
 
-	requirementError := make([]string, 0)
-
-	valid := true
-	for _, r := range requirements {
-		if !hasMinimumCount(password, r.minCount, r.countFunc) {
-			valid = false
-		}
-
-		switch {
-		case r.minCount == 1:
-			requirementError = append(requirementError, fmt.Sprintf(r.singularError, r.minCount))
-		case r.minCount > 1:
-			requirementError = append(requirementError, fmt.Sprintf(r.pluralError, r.minCount))
-		}
+	// cannot contain name of service
+	if strings.Contains(password, "infra") {
+		return validate.Error{"password": []string{"cannot contain common names such as the name of the service"}}
 	}
 
-	if !valid {
-		return validate.Error{"password": requirementError}
+	// common sequences
+	if hasSequence(password) {
+		return validate.Error{"password": []string{"must not have common sequences of characters"}}
+	}
+
+	// repeated characters
+	if hasRepeat(password) {
+		return validate.Error{"password": []string{"must not have repeating characters"}}
 	}
 
 	return nil
+}
+
+func hasRepeat(password string) bool {
+	var char rune
+	var count = 0
+	for _, c := range password {
+		if c != char {
+			char = c
+			count = 1
+			continue
+		}
+
+		count++
+		if count >= 4 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func hasSequence(password string) bool {
+	var char rune
+	var count = 0
+	for _, c := range password {
+		if c != char+1 {
+			char = c
+			count = 1
+			continue
+		}
+
+		count++
+		if count >= 4 {
+			return true
+		}
+	}
+
+	return false
 }

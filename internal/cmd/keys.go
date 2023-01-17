@@ -101,7 +101,7 @@ $ MY_ACCESS_KEY=$(infra keys add -q --name my-key)
 
 			logging.Debugf("call server: create access key named %q", options.Name)
 			resp, err := client.CreateAccessKey(ctx, &api.CreateAccessKeyRequest{
-				UserID:            userID,
+				IssuedForID:       userID,
 				Name:              options.Name,
 				Expiry:            api.Duration(options.Expiry),
 				InactivityTimeout: api.Duration(options.InactivityTimeout),
@@ -306,7 +306,7 @@ func newKeysListCmd(cli *CLI) *cobra.Command {
 
 			var rows []row
 			for _, k := range keys {
-				name := k.IssuedFor.String()
+				name := k.IssuedForID.String()
 				if k.IssuedForName != "" {
 					name = k.IssuedForName
 				}

@@ -13,20 +13,20 @@ var (
 )
 
 const (
-	ScopePasswordReset        string = "password-reset"
-	ScopeAllowCreateAccessKey string = "create-key"
+	ScopePasswordReset           string = "password-reset"
+	ScopeAllowCreateAccessKey    string = "create-key"
+	AccessKeyForKindUser         string = "user"
+	AccessKeyForKindProvider     string = "provider"
+	AccessKeyForKindOrganization string = "organization"
 )
 
 // AccessKey is a session token presented to the Infra server as proof of authentication
 type AccessKey struct {
 	Model
 	OrganizationMember
-	Name string
-	/* IssuedFor is either:
-	1. The ID of the user that this access key was created for.
-	2. The ID of a provider that is doing SCIM provisioning using this access key.
-	*/
-	IssuedFor     uid.ID
+	Name          string
+	IssuedForID   uid.ID
+	IssuedForKind string
 	IssuedForName string `db:"-"`
 	ProviderID    uid.ID
 
@@ -47,8 +47,9 @@ func (ak *AccessKey) ToAPI() *api.AccessKey {
 		Name:              ak.Name,
 		Created:           api.Time(ak.CreatedAt),
 		LastUsed:          api.Time(ak.UpdatedAt), // this tracks UpdatedAt which requires the InactivityTimeout to be set, otherwise it won't be updated
-		IssuedFor:         ak.IssuedFor,
+		IssuedForID:       ak.IssuedForID,
 		IssuedForName:     ak.IssuedForName,
+		IssuedForKind:     ak.IssuedForKind,
 		ProviderID:        ak.ProviderID,
 		Expires:           api.Time(ak.ExpiresAt),
 		InactivityTimeout: api.Time(ak.InactivityTimeout),

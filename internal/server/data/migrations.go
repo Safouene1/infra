@@ -87,6 +87,7 @@ func migrations() []*migrator.Migration {
 		addUserPublicKeyUserIDIndex(),
 		addGrantsSubjectID(),
 		removeSettingsPasswordPolicy(),
+		addAccessKeyIssuedForKind(),
 		// next one here, then run `go test -run TestMigrations ./internal/server/data -update`
 	}
 }
@@ -1255,6 +1256,56 @@ func removeSettingsPasswordPolicy() *migrator.Migration {
 					DROP COLUMN IF EXISTS number_min,
 					DROP COLUMN IF EXISTS symbol_min;`)
 			return err
+		},
+	}
+}
+
+func addAccessKeyIssuedForKind() *migrator.Migration {
+	return &migrator.Migration{
+		ID: "2023-01-17T11:00",
+		Migrate: func(tx migrator.DB) error {
+			if !migrator.HasColumn(tx, "access_keys", "issued_for") {
+				return nil
+			}
+			if _, err := tx.Exec(`DROP INDEX IF EXISTS idx_access_keys_issued_for_name`); err != nil {
+				return fmt.Errorf("drop access key issued_for index: %w", err)
+			}
+			stmt := `
+				ALTER TABLE access_keys RENAME COLUMN issued_for TO issued_for_id;
+				ALTER TABLE access_keys ADD COLUMN IF NOT EXISTS issued_for_kind text DEFAULT 'user';
+			`
+			if _, err := tx.Exec(stmt); err != nil {
+				return fmt.Errorf("add access key issued_for_kind and issued_for_id: %w", err)
+			}
+			if _, err := tx.Exec(`UPDATE access_keys SET issued_for_kind = 'provider' WHERE issued_for_id = provider_id;`); err != nil {
+				return fmt.Errorf("set access key issued_for_kind provider: %w", err)
+			}
+
+			stmt = `SELECT id FROM identities WHERE deleted_at IS NULL AND name = 'connector';`
+			rows, err := tx.Query(stmt)
+			if err != nil {
+				return err
+			}
+			connectorIDs, err := scanRows(rows, func(id *uid.ID) []any {
+				return []any{id}
+			})
+			if err != nil {
+				return fmt.Errorf("read connector identity rows: %w", err)
+			}
+			if len(connectorIDs) > 0 {
+				query := querybuilder.New(`UPDATE access_keys`)
+				query.B(`SET issued_for_kind = 'organization'`)
+				query.B(`WHERE issued_for_id IN`)
+				queryInClause(query, connectorIDs)
+				_, err := tx.Exec(query.String(), query.Args...)
+				if err != nil {
+					return fmt.Errorf("set connector key issued_for_kind organization: %w", err)
+				}
+			}
+			if _, err := tx.Exec(`CREATE UNIQUE INDEX idx_access_keys_issued_for ON access_keys USING btree (organization_id, issued_for_id, name) WHERE (deleted_at IS NULL);`); err != nil {
+				return fmt.Errorf("create access key issued_for index: %w", err)
+			}
+			return nil
 		},
 	}
 }

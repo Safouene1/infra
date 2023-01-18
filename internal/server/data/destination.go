@@ -270,3 +270,25 @@ func ListDestinationAccess(tx ReadTxn, destination string) ([]DestinationAccess,
 	})
 	return userAccess, nil
 }
+
+// DestinationAccessMaxUpdateIndex returns the maximum update_index from all
+// the grants and groups that match the query.
+// This MUST include soft-deleted rows as well.
+//
+// Returns 1 if no records match the query, so that the caller can block until
+// a record exists.
+//
+// TODO: any way to assert this tx has the right isolation level?
+func DestinationAccessMaxUpdateIndex(tx ReadTxn, name string) (int64, error) {
+	query := querybuilder.New("SELECT max(update_index) FROM grants")
+	query.B("WHERE organization_id = ?", tx.OrganizationID())
+
+	// TODO: joins for groups
+
+	var result *int64
+	err := tx.QueryRow(query.String(), query.Args...).Scan(&result)
+	if err != nil || result == nil {
+		return 1, err
+	}
+	return *result, err
+}

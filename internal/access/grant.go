@@ -106,9 +106,6 @@ func ListGrants(rCtx RequestContext, opts data.ListGrantsOptions, lastUpdateInde
 		return result, err
 	}
 
-	// TODO: check if the maxIndex > lastUpdateIndex, and start waiting for
-	// notification again when it's false. When we include group membership
-	// changes in the query this will be an optimization.
 	return result, nil
 }
 

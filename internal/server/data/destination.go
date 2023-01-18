@@ -231,6 +231,7 @@ type DestinationAccess struct {
 }
 
 func ListDestinationAccess(tx ReadTxn, destination string) ([]DestinationAccess, error) {
+	// IMPORTANT: changes to this query likely also need to be applied to DestinationAccessMaxUpdateIndex
 	query := querybuilder.New("SELECT")
 	query.B("identities.id, identities.ssh_login_name, grants.privilege, grants.resource")
 	query.B("FROM grants")
@@ -279,11 +280,20 @@ func ListDestinationAccess(tx ReadTxn, destination string) ([]DestinationAccess,
 // a record exists.
 //
 // TODO: any way to assert this tx has the right isolation level?
-func DestinationAccessMaxUpdateIndex(tx ReadTxn, name string) (int64, error) {
-	query := querybuilder.New("SELECT max(update_index) FROM grants")
-	query.B("WHERE organization_id = ?", tx.OrganizationID())
-
-	// TODO: joins for groups
+func DestinationAccessMaxUpdateIndex(tx ReadTxn, destination string) (int64, error) {
+	// IMPORTANT: changes to this query likely also need to be applied to ListDestinationAccess
+	query := querybuilder.New("SELECT max(idx) FROM (")
+	query.B("SELECT max(grants.update_index) as idx FROM grants")
+	query.B("WHERE grants.organization_id = ?", tx.OrganizationID())
+	grantsByDestination(query, destination)
+	query.B("UNION ALL SELECT")
+	query.B("max(groups.membership_update_index) as idx")
+	query.B("FROM grants")
+	query.B("JOIN groups ON grants.subject_id = groups.id")
+	query.B("AND grants.subject_kind = ?", models.SubjectKindGroup)
+	query.B("AND grants.organization_id = ?", tx.OrganizationID())
+	grantsByDestination(query, destination)
+	query.B(") as subq")
 
 	var result *int64
 	err := tx.QueryRow(query.String(), query.Args...).Scan(&result)

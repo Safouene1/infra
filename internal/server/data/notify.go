@@ -87,7 +87,7 @@ type ListenChannelDestinationCredentialsByDestinationID struct {
 }
 
 func (l ListenChannelDestinationCredentialsByDestinationID) Channel() string {
-	return fmt.Sprintf("credreq_%v_%v", l.OrgID, l.DestinationID)
+	return fmt.Sprintf("dcredReq.%v.%v", l.OrgID, l.DestinationID)
 }
 
 type ListenChannelDestinationCredentialsByID struct {
@@ -96,7 +96,7 @@ type ListenChannelDestinationCredentialsByID struct {
 }
 
 func (l ListenChannelDestinationCredentialsByID) Channel() string {
-	return fmt.Sprintf("credans_%v_%v", l.OrgID, l.DestinationCredentialsID)
+	return fmt.Sprintf("dcredResp.%v.%v", l.OrgID, l.DestinationCredentialsID)
 }
 
 type ListenChannelGroupMembership struct {

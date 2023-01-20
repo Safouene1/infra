@@ -16,7 +16,6 @@ import (
 	"github.com/infrahq/infra/internal/logging"
 	"github.com/infrahq/infra/internal/server/data"
 	"github.com/infrahq/infra/internal/server/models"
-	"github.com/infrahq/infra/uid"
 )
 
 func (a *API) ListDestinations(c *gin.Context, r *api.ListDestinationsRequest) (*api.ListResponse[api.Destination], error) {
@@ -114,25 +113,7 @@ func (a *API) DeleteDestination(c *gin.Context, r *api.Resource) (*api.EmptyResp
 	return nil, access.DeleteDestination(getRequestContext(c), r.ID)
 }
 
-// TODO: move types to api package
-type ListDestinationAccessRequest struct {
-	Name string `uri:"id"` // TODO: change to ID when grants stores destinationID
-	api.BlockingRequest
-}
-
-type ListDestinationAccessResponse struct {
-	Items               []DestinationAccess `json:"items"`
-	api.LastUpdateIndex `json:"-"`
-}
-
-type DestinationAccess struct {
-	UserID           uid.ID `json:"userID"`
-	UserSSHLoginName string `json:"userSSHLoginName"`
-	Privilege        string `json:"privilege"`
-	Resource         string `json:"resource"`
-}
-
-func ListDestinationAccess(c *gin.Context, r *ListDestinationAccessRequest) (*ListDestinationAccessResponse, error) {
+func ListDestinationAccess(c *gin.Context, r *api.ListDestinationAccessRequest) (*api.ListDestinationAccessResponse, error) {
 	rCtx := getRequestContext(c)
 	rCtx.Response.AddLogFields(func(event *zerolog.Event) {
 		event.Int64("lastUpdateIndex", r.LastUpdateIndex)
@@ -148,7 +129,7 @@ func ListDestinationAccess(c *gin.Context, r *ListDestinationAccessRequest) (*Li
 		if err != nil {
 			return nil, err
 		}
-		return &ListDestinationAccessResponse{
+		return &api.ListDestinationAccessResponse{
 			Items: destinationAccessToAPI(result),
 		}, nil
 	}
@@ -228,10 +209,10 @@ func ListDestinationAccess(c *gin.Context, r *ListDestinationAccessRequest) (*Li
 	return result, nil
 }
 
-func destinationAccessToAPI(a []data.DestinationAccess) []DestinationAccess {
-	result := make([]DestinationAccess, 0, len(a))
+func destinationAccessToAPI(a []data.DestinationAccess) []api.DestinationAccess {
+	result := make([]api.DestinationAccess, 0, len(a))
 	for _, item := range a {
-		result = append(result, DestinationAccess{
+		result = append(result, api.DestinationAccess{
 			UserID:           item.UserID,
 			UserSSHLoginName: item.UserSSHLoginName,
 			Privilege:        item.Privilege,
@@ -241,7 +222,7 @@ func destinationAccessToAPI(a []data.DestinationAccess) []DestinationAccess {
 	return result
 }
 
-func listDestinationAccessWithMaxUpdateIndex(rCtx access.RequestContext, name string) (*ListDestinationAccessResponse, error) {
+func listDestinationAccessWithMaxUpdateIndex(rCtx access.RequestContext, name string) (*api.ListDestinationAccessResponse, error) {
 	tx, err := rCtx.DataDB.Begin(rCtx.Request.Context(), &sql.TxOptions{
 		ReadOnly:  true,
 		Isolation: sql.LevelRepeatableRead,
@@ -261,7 +242,7 @@ func listDestinationAccessWithMaxUpdateIndex(rCtx access.RequestContext, name st
 	if err != nil {
 		return nil, err
 	}
-	return &ListDestinationAccessResponse{
+	return &api.ListDestinationAccessResponse{
 		Items:           destinationAccessToAPI(result),
 		LastUpdateIndex: api.LastUpdateIndex{Index: maxUpdateIndex},
 	}, nil

@@ -12,6 +12,7 @@ import (
 	"gotest.tools/v3/golden"
 
 	"github.com/infrahq/infra/api"
+	"github.com/infrahq/infra/internal/server/models"
 	"github.com/infrahq/infra/uid"
 )
 
@@ -80,6 +81,7 @@ func TestKeysAddCmd(t *testing.T) {
 		req := <-ch
 		expected := api.CreateAccessKeyRequest{
 			IssuedForID:       uid.ID(12345678),
+			IssuedForKind:     models.AccessKeyForKindUser,
 			Name:              "the-name",
 			Expiry:            api.Duration(400 * time.Hour),
 			InactivityTimeout: api.Duration(5 * time.Hour),

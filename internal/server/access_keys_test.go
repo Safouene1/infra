@@ -372,7 +372,7 @@ func TestAPI_CreateAccessKey(t *testing.T) {
 }
 
 var cmpAPICreateAccessKeyJSON = gocmp.Options{
-	gocmp.FilterPath(pathMapKey(`created`, `expires`, `extensionDeadline`), cmpApproximateTime),
+	gocmp.FilterPath(pathMapKey(`created`, `expires`, `extensionDeadline`, `inactivityTimeout`), cmpApproximateTime),
 	gocmp.FilterPath(pathMapKey(`id`), cmpAnyValidUID),
 	gocmp.FilterPath(pathMapKey(`accessKey`), cmpAnyValidAccessKey),
 	gocmp.FilterPath(pathMapKey(`name`), cmpAnyStringSuffix),

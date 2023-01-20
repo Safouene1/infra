@@ -467,7 +467,7 @@
                   "type": "string"
                 },
                 "issuedForKind": {
-                  "description": "the kind entity the key was issued for (eg: user or provider)",
+                  "description": "the kind entity the key was issued for (eg: user, organization, or provider)",
                   "example": "user",
                   "type": "string"
                 },

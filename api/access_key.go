@@ -12,7 +12,7 @@ type AccessKey struct {
 	Name              string   `json:"name" example:"cicdkey" note:"Name of the access key"`
 	IssuedForName     string   `json:"issuedForName" example:"admin@example.com" note:"Name of the user the key was issued to"`
 	IssuedForID       uid.ID   `json:"issuedForID" note:"ID of the entity the key was issued to"`
-	IssuedForKind     string   `json:"issuedForKind" example:"user" note:"the kind entity the key was issued for (eg: user or provider)"`
+	IssuedForKind     string   `json:"issuedForKind" example:"user" note:"the kind entity the key was issued for (eg: user, organization, or provider)"`
 	ProviderID        uid.ID   `json:"providerID" note:"ID of the provider if the user is managed by an OIDC provider"`
 	Expires           Time     `json:"expires" note:"key is no longer valid after this time"`
 	InactivityTimeout Time     `json:"inactivityTimeout" note:"key must be used by this time to remain valid"`

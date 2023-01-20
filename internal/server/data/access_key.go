@@ -81,7 +81,7 @@ func CreateAccessKey(db WriteTxn, accessKey *models.AccessKey) (body string, err
 		accessKey.ExpiresAt = time.Now().Add(time.Hour * 12).UTC()
 	}
 
-	if accessKey.IssuedForKind == "" {
+	if accessKey.IssuedForKind != models.AccessKeyForKindProvider {
 		identityIssuedFor, err := GetIdentity(db, GetIdentityOptions{ByID: accessKey.IssuedForID})
 		if err != nil {
 			return "", fmt.Errorf("key name from identity: %w", err)

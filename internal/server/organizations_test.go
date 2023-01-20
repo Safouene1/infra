@@ -402,6 +402,8 @@ func TestAPI_UpdateOrganization(t *testing.T) {
 	org := models.Organization{Name: "update-org", Domain: "update.example.com"}
 
 	createOrgs(t, srv.DB(), &org)
+	tx := txnForTestCase(t, srv.db, org.ID)
+
 	createID := func(t *testing.T, name string) uid.ID {
 		t.Helper()
 		var buf bytes.Buffer
@@ -426,7 +428,6 @@ func TestAPI_UpdateOrganization(t *testing.T) {
 
 	token := &models.AccessKey{
 		IssuedForID: idDiffOrg,
-		ProviderID:  data.InfraProvider(srv.DB()).ID,
 		ExpiresAt:   time.Now().Add(10 * time.Second),
 	}
 
@@ -435,37 +436,32 @@ func TestAPI_UpdateOrganization(t *testing.T) {
 
 	// create a user in the testing org
 	user := &models.Identity{
-		OrganizationMember: models.OrganizationMember{OrganizationID: org.ID},
-		Name:               "joe@example.com",
+		Name: "joe@example.com",
 	}
-	assert.NilError(t, data.CreateIdentity(srv.db, user))
+	assert.NilError(t, data.CreateIdentity(tx, user))
 
 	userAccess := &models.AccessKey{
-		OrganizationMember: models.OrganizationMember{OrganizationID: org.ID},
-		Name:               "org key",
-		IssuedForID:        user.ID,
-		IssuedForName:      user.Name,
-		IssuedForKind:      models.AccessKeyForKindUser,
-		ProviderID:         data.InfraProvider(srv.db).ID,
-		ExpiresAt:          time.Now().Add(10 * time.Minute).UTC().Truncate(time.Second),
+		Name:          "org key",
+		IssuedForID:   user.ID,
+		IssuedForName: user.Name,
+		IssuedForKind: models.AccessKeyForKindUser,
+		ExpiresAt:     time.Now().Add(10 * time.Minute).UTC().Truncate(time.Second),
 	}
-	userKey, err := data.CreateAccessKey(srv.db, userAccess)
+	userKey, err := data.CreateAccessKey(tx, userAccess)
 	assert.NilError(t, err)
 
 	// create an admin user in the testing org
 	admin := &models.Identity{
-		OrganizationMember: models.OrganizationMember{OrganizationID: org.ID},
-		Name:               "alice@example.com",
+		Name: "alice@example.com",
 	}
-	assert.NilError(t, data.CreateIdentity(srv.db, admin))
+	assert.NilError(t, data.CreateIdentity(tx, admin))
 
 	adminGrant := &models.Grant{
-		OrganizationMember: models.OrganizationMember{OrganizationID: org.ID},
-		Subject:            models.NewSubjectForUser(admin.ID),
-		Privilege:          "admin",
-		Resource:           "infra",
+		Subject:   models.NewSubjectForUser(admin.ID),
+		Privilege: "admin",
+		Resource:  "infra",
 	}
-	assert.NilError(t, data.CreateGrant(srv.db, adminGrant))
+	assert.NilError(t, data.CreateGrant(tx, adminGrant))
 
 	adminAccessKey := &models.AccessKey{
 		OrganizationMember: models.OrganizationMember{OrganizationID: org.ID},
@@ -473,11 +469,14 @@ func TestAPI_UpdateOrganization(t *testing.T) {
 		IssuedForID:        admin.ID,
 		IssuedForName:      admin.Name,
 		IssuedForKind:      models.AccessKeyForKindUser,
-		ProviderID:         data.InfraProvider(srv.db).ID,
 		ExpiresAt:          time.Now().Add(10 * time.Minute).UTC().Truncate(time.Second),
 	}
-	adminKey, err := data.CreateAccessKey(srv.db, adminAccessKey)
+	adminKey, err := data.CreateAccessKey(tx, adminAccessKey)
 	assert.NilError(t, err)
+
+	unauthorizedKey, _ := createAccessKey(t, tx, "someonenew@example.com")
+
+	assert.NilError(t, tx.Commit())
 
 	type testCase struct {
 		urlPath  string
@@ -509,6 +508,7 @@ func TestAPI_UpdateOrganization(t *testing.T) {
 			},
 			setup: func(t *testing.T, req *http.Request) {
 				req.Header.Del("Authorization")
+				req.Host = "update.example.com"
 			},
 			expected: func(t *testing.T, resp *httptest.ResponseRecorder) {
 				assert.Equal(t, resp.Code, http.StatusUnauthorized)
@@ -520,8 +520,8 @@ func TestAPI_UpdateOrganization(t *testing.T) {
 				AllowedDomains: []string{"fail.example.com"},
 			},
 			setup: func(t *testing.T, req *http.Request) {
-				key, _ := createAccessKey(t, srv.DB(), "someonenew@example.com")
-				req.Header.Set("Authorization", "Bearer "+key)
+				req.Header.Set("Authorization", "Bearer "+unauthorizedKey)
+				req.Host = "update.example.com"
 			},
 			expected: func(t *testing.T, resp *httptest.ResponseRecorder) {
 				assert.Equal(t, resp.Code, http.StatusForbidden)

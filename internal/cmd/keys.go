@@ -10,6 +10,7 @@ import (
 	"github.com/infrahq/infra/api"
 	"github.com/infrahq/infra/internal/format"
 	"github.com/infrahq/infra/internal/logging"
+	"github.com/infrahq/infra/internal/server/models"
 )
 
 const (
@@ -79,9 +80,11 @@ $ MY_ACCESS_KEY=$(infra keys add -q --name my-key)
 			}
 
 			userID := config.UserID
+			kind := models.AccessKeyForKindUser
 
 			// override the user setting if the user wants to create a connector access key
 			if options.Connector {
+				kind = models.AccessKeyForKindOrganization
 				options.UserName = "connector"
 			}
 
@@ -102,6 +105,7 @@ $ MY_ACCESS_KEY=$(infra keys add -q --name my-key)
 			logging.Debugf("call server: create access key named %q", options.Name)
 			resp, err := client.CreateAccessKey(ctx, &api.CreateAccessKeyRequest{
 				IssuedForID:       userID,
+				IssuedForKind:     kind,
 				Name:              options.Name,
 				Expiry:            api.Duration(options.Expiry),
 				InactivityTimeout: api.Duration(options.InactivityTimeout),

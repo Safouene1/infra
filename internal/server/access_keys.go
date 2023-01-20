@@ -141,6 +141,10 @@ func (a *API) addPreviousVersionHandlersAccessKey() {
 					Expiry:            reqOld.TTL,
 					InactivityTimeout: reqOld.ExtensionDeadline,
 				}
+				// check if this is an access key being issued for identity provider scim
+				if strings.HasSuffix(req.Name, "-scim") {
+					req.IssuedForKind = models.AccessKeyForKindProvider
+				}
 				resp, err := a.CreateAccessKey(c, req)
 				if err != nil {
 					return nil, err
